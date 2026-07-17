@@ -1,183 +1,79 @@
-<!DOCTYPE html>
+PARTE 1:
+html<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeleArgenta — Prueba de Cards</title>
+    <title>TeleArgenta — TV Abierta en Vivo</title>
+    <meta property="og:title" content="TeleArgenta" />
+    <meta property="og:description" content="Todos los canales de la televisión abierta argentina en un solo lugar." />
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; padding: 20px; }
-        h2 { color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin: 24px 0 10px; }
+        body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; min-height: 100vh; }
+        header { text-align: center; padding: 22px 20px 12px; background: linear-gradient(180deg,#111 0%,#0a0a0a 100%); border-bottom: 1px solid #1a1a1a; }
+        .logo-texto { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; color: #fff; text-transform: uppercase; }
+        .logo-sub { font-size: 0.9rem; color: #0077ff; font-weight: bold; margin-top: 4px; display: block; }
+        .logo-contador { font-size: 11px; color: #444; display: block; margin-top: 4px; }
+        .parentesis { color: #333; font-weight: 300; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; flex-direction: column; }
         .overlay.activo { display: flex; }
         .overlay-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #111; border-bottom: 1px solid #222; flex-shrink: 0; }
-        .overlay-titulo { font-size: 14px; font-weight: bold; color: #fff; }
+        .overlay-titulo { font-size: 15px; font-weight: bold; color: #fff; }
         .overlay-ciudad { font-size: 11px; color: #555; margin-left: 8px; }
         .btn-cerrar { background: #c0392b; border: none; color: #fff; padding: 9px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        .overlay-player { flex: 1; width: 100%; background: #111; position: relative; overflow: hidden; }
+        .btn-cerrar:hover { background: #e74c3c; }
+        .overlay-player { flex: 1; width: 100%; background: #0a0a0a; position: relative; overflow: hidden; }
         .overlay-player iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .overlay-player video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; }
         .overlay-nav { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 12px 16px; background: #111; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
         .btn-nav { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 32px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
-        .btn-nav:hover { background: #0077ff; border-color: #0077ff; }
+        .btn-nav:hover, .btn-nav:focus { background: #0077ff; border-color: #0077ff; outline: none; }
         .overlay-canal-info { color: #555; font-size: 12px; min-width: 80px; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; }
+        .filters { display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px; scrollbar-width: none; background: #0d0d0d; }
+        .filters::-webkit-scrollbar { display: none; }
+        .filters button { padding: 7px 14px; border: 1px solid #333; border-radius: 20px; background: #1a1a1a; color: #bbb; cursor: pointer; font-size: 12px; white-space: nowrap; transition: 0.2s; }
+        .filters button.activo { background: #0077ff; border-color: #0077ff; color: #fff; }
+        .search { width: 92%; margin: 8px auto; }
+        .search input { width: 100%; padding: 11px 14px; border-radius: 10px; background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a; outline: none; font-size: 14px; }
+        .search input:focus { border-color: #0077ff; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 12px; }
         .card { background: #161616; border-radius: 12px; border: 1px solid #1e1e1e; padding: 14px 10px 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
         .card:hover { border-color: #0077ff; background: #1a1a1a; transform: translateY(-2px); }
         .card.active { border-color: #0077ff; background: #0d1a2e; }
-        .card[data-tipo="sin"] { cursor: default; opacity: 0.6; }
+        .card[data-tipo="sin"] { cursor: default; opacity: 0.5; }
         .card[data-tipo="sin"]:hover { transform: none; border-color: #1e1e1e; background: #161616; }
-        .card-logo-wrap { width: 80px; height: 45px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
-        .card-logo-wrap img { max-width: 80px; max-height: 45px; object-fit: contain; filter: brightness(0.85); }
-        .card-logo-text { font-size: 13px; font-weight: 900; color: #333; letter-spacing: -0.5px; text-align: center; line-height: 1.1; }
-        .card-name { font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 2px; line-height: 1.3; min-height: 26px; display: flex; align-items: center; justify-content: center; }
-        .card-city { font-size: 9px; color: #4a4a4a; text-transform: uppercase; margin-bottom: 8px; }
-        .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 8px; }
-        .badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-        .badge-pub  { background: #0d2a0d; color: #4caf50; }
-        .badge-priv { background: #0d1a3a; color: #5c8aff; }
-        .badge-univ { background: #2a1a00; color: #ff9800; }
-        .badge-com  { background: #1a1a00; color: #cddc39; }
-        .badge-rel  { background: #2a0d0d; color: #ff5252; }
-        .badge-nosenal { background: #2a2a2a; color: #666; }
-        .badge-tipo { position: absolute; top: 7px; right: 7px; font-size: 7px; padding: 2px 4px; border-radius: 3px; font-weight: bold; }
+        .card-logo-wrap { width: 80px; height: 42px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
+        .card-logo-wrap img { max-width: 80px; max-height: 42px; object-fit: contain; filter: brightness(0.9); }
+        .card-logo-text { font-size: 12px; font-weight: 900; color: #2a2a2a; letter-spacing: -0.5px; text-align: center; line-height: 1.1; word-break: break-word; }
+        .card-name { font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 2px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+        .card-city { font-size: 9px; color: #4a4a4a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 9px; min-height: 16px; }
+        .badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; font-weight: bold; line-height: 1.4; }
+        .badge-pub     { background: #0d2a0d; color: #4caf50; }
+        .badge-priv    { background: #0d1a3a; color: #5c8aff; }
+        .badge-univ    { background: #2a1a00; color: #ff9800; }
+        .badge-com     { background: #1a1a00; color: #cddc39; }
+        .badge-rel     { background: #2a0d0d; color: #ff5252; }
+        .badge-nosenal { background: #2a2a2a; color: #555; }
         .btn-ver { width: 100%; padding: 8px; border: none; border-radius: 7px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s; }
         .btn-ver.play { background: #0077ff; color: #fff; }
         .btn-ver.play:hover { background: #005fcc; }
         .btn-ver.yt-link { background: #ff0000; color: #fff; }
         .btn-ver.yt-link:hover { background: #cc0000; }
-        .btn-ver.sin { background: #1a1a1a; color: #444; cursor: default; border: 1px solid #222; }
+        .btn-ver.sin { background: #1a1a1a; color: #444; cursor: default; border: 1px solid #1e1e1e; }
+        footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; margin-top: 20px; border-top: 1px solid #111; }
+        .btn-contacto { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #1a1a1a; color: #666; text-decoration: none; border-radius: 7px; border: 1px solid #2a2a2a; font-size: 11px; }
+        @media (max-width: 480px) { .grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; padding: 8px; } .logo-texto { font-size: 1.4rem; } .btn-nav { padding: 10px 20px; font-size: 14px; } }
+        @media (min-width: 1200px) { .btn-nav { padding: 14px 40px; font-size: 18px; } .btn-cerrar { padding: 12px 28px; font-size: 16px; } .overlay-titulo { font-size: 18px; } }
     </style>
 </head>
 <body>
-   <h2>▶ Tipo 1 — YouTube embed directo (se ve en el player)</h2>
-<div class="grid">
-
-    <div class="card" data-tipo="yt" data-url="UCT7KFGv6s2a-rh2Jq8ZdM1g" data-nombre="Crónica TV" data-ciudad="Nacional" data-logo-text="CRÓNICA TV">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">CRÓNICA TV</div></div>
-        <div class="card-name">Crónica TV</div>
-        <div class="card-city">Nacional</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-    <div class="card" data-tipo="yt" data-url="UCFgk2Q2mVO1BklRQhSv6p0w" data-nombre="C5N" data-ciudad="Nacional" data-logo-text="C5N">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">C5N</div></div>
-        <div class="card-name">C5N</div>
-        <div class="card-city">Nacional</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-    <div class="card" data-tipo="yt" data-url="UCR9120YBAqMfntqgRTKmkjQ" data-nombre="A24" data-ciudad="Buenos Aires" data-logo-text="A24">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">A24</div></div>
-        <div class="card-name">A24</div>
-        <div class="card-city">Buenos Aires</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-</div>
-
-<h2>🔗 Tipo 2 — YouTube con embed bloqueado (abre en YouTube)</h2>
-<div class="grid">
-
-    <div class="card" data-tipo="yt-link" data-url="https://www.youtube.com/@todonoticias/live" data-nombre="TN Todo Noticias" data-ciudad="Buenos Aires" data-logo-text="TN">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">TN</div></div>
-        <div class="card-name">TN Todo Noticias</div>
-        <div class="card-city">Buenos Aires</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver yt-link">▶ Ver en YouTube</button>
-    </div>
-
-    <div class="card" data-tipo="yt-link" data-url="https://www.youtube.com/@LaNacionMas/live" data-nombre="LN+" data-ciudad="Nacional" data-logo-text="LN+">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">LN+</div></div>
-        <div class="card-name">LN+</div>
-        <div class="card-city">Nacional</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver yt-link">▶ Ver en YouTube</button>
-    </div>
-
-    <div class="card" data-tipo="yt-link" data-url="https://www.youtube.com/@canal13sanjuan/live" data-nombre="Canal 13" data-ciudad="San Juan" data-logo-text="CANAL 13">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">CANAL 13</div></div>
-        <div class="card-name">Canal 13</div>
-        <div class="card-city">San Juan</div>
-        <div class="badges"><span class="badge badge-priv">NOTICIAS</span></div>
-        <button class="btn-ver yt-link">▶ Ver en YouTube</button>
-    </div>
-
-</div>
-
-<h2>📻 Tipo 3 — Web propia / radio con cámara</h2>
-<div class="grid">
-
-    <div class="card" data-tipo="web" data-url="https://fm-aspen.com.ar/#aspennet" data-nombre="Aspen 102.3" data-ciudad="Buenos Aires" data-logo-text="ASPEN">
-        <span class="badge-tipo badge-priv">PRIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">ASPEN</div></div>
-        <div class="card-name">Aspen 102.3</div>
-        <div class="card-city">Buenos Aires</div>
-        <div class="badges"><span class="badge badge-priv">MÚSICA</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-    <div class="card" data-tipo="web" data-url="http://www.litustv.com.ar/" data-nombre="Litus TV" data-ciudad="Santa Fe" data-logo-text="LITUS TV">
-        <span class="badge-tipo badge-univ">UNIV</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">LITUS TV</div></div>
-        <div class="card-name">Litus TV</div>
-        <div class="card-city">Santa Fe</div>
-        <div class="badges"><span class="badge badge-univ">UNIVERSITARIO</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-    <div class="card" data-tipo="web" data-url="https://radiomaria.org.ar/institucional/transmision-en-vivo/" data-nombre="Radio María TV" data-ciudad="Córdoba" data-logo-text="RADIO MARÍA">
-        <span class="badge-tipo badge-rel">REL</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">RADIO MARÍA</div></div>
-        <div class="card-name">Radio María TV</div>
-        <div class="card-city">Córdoba</div>
-        <div class="badges"><span class="badge badge-rel">RELIGIOSO</span></div>
-        <button class="btn-ver play">▶ Ver en vivo</button>
-    </div>
-
-</div>
-
-<h2>⏸ Tipo 4 — Sin señal disponible</h2>
-<div class="grid">
-
-    <div class="card" data-tipo="sin" data-url="" data-nombre="Encuentro" data-ciudad="Nacional" data-logo-text="ENCUENTRO">
-        <span class="badge-tipo badge-pub">PÚB</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">ENCUENTRO</div></div>
-        <div class="card-name">Encuentro</div>
-        <div class="card-city">Nacional</div>
-        <div class="badges"><span class="badge badge-nosenal">SIN SEÑAL</span><span class="badge badge-pub">EDUCATIVO</span></div>
-        <button class="btn-ver sin">⏸ Sin señal</button>
-    </div>
-
-    <div class="card" data-tipo="sin" data-url="" data-nombre="DeporTV" data-ciudad="Nacional" data-logo-text="DEPOR TV">
-        <span class="badge-tipo badge-pub">PÚB</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">DEPOR TV</div></div>
-        <div class="card-name">DeporTV</div>
-        <div class="card-city">Nacional</div>
-        <div class="badges"><span class="badge badge-nosenal">SIN SEÑAL</span><span class="badge badge-pub">DEPORTES</span></div>
-        <button class="btn-ver sin">⏸ Sin señal</button>
-    </div>
-
-    <div class="card" data-tipo="sin" data-url="" data-nombre="RTN" data-ciudad="Neuquén" data-logo-text="RTN">
-        <span class="badge-tipo badge-pub">PÚB</span>
-        <div class="card-logo-wrap"><div class="card-logo-text">RTN</div></div>
-        <div class="card-name">RTN</div>
-        <div class="card-city">Neuquén</div>
-        <div class="badges"><span class="badge badge-nosenal">SIN SEÑAL WEB</span><span class="badge badge-pub">CULTURAL</span></div>
-        <button class="btn-ver sin">⏸ Sin señal</button>
-    </div>
-
-</div>
-
-<!-- OVERLAY -->
+<header>
+    <h1 class="logo-texto"><span class="parentesis">(</span>TELE<span class="parentesis">)</span>ARGENTA</h1>
+    <span class="logo-sub">TELEVISIÓN ABIERTA EN VIVO</span>
+    <span class="logo-contador" id="contadorCanales"></span>
+</header>
 <div class="overlay" id="overlay">
     <div class="overlay-header">
         <div>
@@ -193,95 +89,21 @@
         <button class="btn-nav" onclick="canalSiguiente()">Siguiente ▶</button>
     </div>
 </div>
+<div class="filters">
+    <button onclick="filtrar('todas')" class="activo">Todas</button>
+    <button onclick="filtrar('nacional')">Nacional</button>
+    <button onclick="filtrar('amba')">AMBA</button>
+    <button onclick="filtrar('bsas')">Bs. As.</button>
+    <button onclick="filtrar('centro')">Centro</button>
+    <button onclick="filtrar('norte')">Norte</button>
+    <button onclick="filtrar('cuyo')">Cuyo</button>
+    <button onclick="filtrar('patagonia')">Patagonia</button>
+    <button onclick="filtrar('internacional')">Internacional</button>
+</div>
+<div class="search">
+    <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
+</div>
+<div class="grid" id="grid">
+Avisame cuando pegaste y vamos con la Parte 2 — canales Nacional.¿Quieres recibir una notificación cuando Claude responda?
 
-<script>
-let tarjetasVisibles = [];
-let indiceActual = -1;
-
-function abrirCanal(card) {
-    const tipo     = card.dataset.tipo;
-    const url      = card.dataset.url;
-    const nombre   = card.dataset.nombre;
-    const ciudad   = card.dataset.ciudad;
-    const logoText = card.dataset.logoText || nombre;
-
-    if (tipo === "sin") return;
-
-    if (tipo === "yt-link") {
-        window.open(url, "_blank");
-        return;
-    }
-
-    tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
-        .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
-    indiceActual = tarjetasVisibles.indexOf(card);
-    cargarEnOverlay(url, tipo, nombre, ciudad, logoText);
-    document.getElementById("overlay").classList.add("activo");
-    document.body.style.overflow = "hidden";
-}
-
-function cargarEnOverlay(url, tipo, nombre, ciudad, logoText) {
-    document.getElementById("overlayTitulo").innerText = nombre;
-    document.getElementById("overlayCiudad").innerText = "— " + ciudad;
-    const total = tarjetasVisibles.length;
-    document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " / " + total : "";
-    const player = document.getElementById("overlayPlayer");
-
-    if (tipo === "yt") {
-        player.innerHTML = `<iframe
-            src="https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0"
-            allowfullscreen allow="autoplay; encrypted-media; fullscreen">
-        </iframe>`;
-    } else {
-        player.innerHTML = `<iframe
-            src="${url}"
-            allowfullscreen allow="autoplay; encrypted-media; fullscreen"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox">
-        </iframe>`;
-    }
-}
-
-function cerrarOverlay() {
-    document.getElementById("overlay").classList.remove("activo");
-    document.getElementById("overlayPlayer").innerHTML = "";
-    document.body.style.overflow = "";
-    document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
-}
-
-function canalSiguiente() {
-    if (!tarjetasVisibles.length) return;
-    indiceActual = (indiceActual + 1) % tarjetasVisibles.length;
-    const card = tarjetasVisibles[indiceActual];
-    resaltarCard(card);
-    cargarEnOverlay(card.dataset.url, card.dataset.tipo, card.dataset.nombre, card.dataset.ciudad, card.dataset.logoText);
-}
-
-function canalAnterior() {
-    if (!tarjetasVisibles.length) return;
-    indiceActual = (indiceActual - 1 + tarjetasVisibles.length) % tarjetasVisibles.length;
-    const card = tarjetasVisibles[indiceActual];
-    resaltarCard(card);
-    cargarEnOverlay(card.dataset.url, card.dataset.tipo, card.dataset.nombre, card.dataset.ciudad, card.dataset.logoText);
-}
-
-function resaltarCard(card) {
-    document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
-    card.classList.add("active");
-}
-
-document.addEventListener("click", function(e) {
-    const card = e.target.closest(".card");
-    if (!card) return;
-    if (card.dataset.tipo === "sin") return;
-    resaltarCard(card);
-    abrirCanal(card);
-});
-
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape")     cerrarOverlay();
-    if (e.key === "ArrowRight") canalSiguiente();
-    if (e.key === "ArrowLeft")  canalAnterior();
-});
-</script>
-</body>
-</html>
+   
