@@ -1648,6 +1648,8 @@
     <a href="mailto:teleargenta@gmail.com" class="btn-contacto">📧 Sugerí un canal</a>
 </footer>
 
+let regionActual = "nacional";
+    
 <script>
 let hlsInstance = null;
 let tarjetasVisibles = [];
@@ -1750,8 +1752,13 @@ function filtrar(region) {
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".filters button").forEach(b => b.classList.remove("activo"));
     event.target.classList.add("activo");
+    regionActual = region;
+    renderCards();
+}
+
+function renderCards() {
     document.querySelectorAll(".card").forEach(card => {
-        card.style.display = (region === "todas" || card.dataset.region === region) ? "block" : "none";
+        card.style.display = (regionActual === "todas" || card.dataset.region === regionActual) ? "block" : "none";
     });
     actualizarVisibles();
 }
@@ -1774,7 +1781,9 @@ function actualizarVisibles() {
 window.addEventListener("load", () => {
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
     document.getElementById("contadorCanales").innerText = total + " canales disponibles";
-    actualizarVisibles();
+    renderCards();
+    document.querySelector(".filters button[onclick=\"filtrar('nacional')\"]").classList.add("activo");
+    document.querySelector(".filters button[onclick=\"filtrar('todas')\"]").classList.remove("activo");
 });
 </script>
 </body>
