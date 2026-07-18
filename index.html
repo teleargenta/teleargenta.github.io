@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+<head> 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0077ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TeleArgenta">
+<link rel="apple-touch-icon" href="/icon-192.png">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TeleArgenta — TV Abierta en Vivo</title>
@@ -67,6 +74,11 @@
         @media (min-width: 1200px) { .btn-nav { padding: 14px 40px; font-size: 18px; } .btn-cerrar { padding: 12px 28px; font-size: 16px; } .overlay-titulo { font-size: 18px; } }
     </style>
 </head>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+}
+</script> 
 <body>
 <header>
     <h1 class="logo-texto"><span class="parentesis">(</span>TELE<span class="parentesis">)</span>ARGENTA</h1>
