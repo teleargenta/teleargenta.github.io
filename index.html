@@ -91,6 +91,7 @@
     <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
 </div>
 <div class="grid" id="grid">
+    
 <!-- === NACIONAL === -->
 
 <div class="card" data-region="nacional" data-nombre="tv publica canal 7 argentina nacional" data-url="https://g4.mc-hor.transport.edge-access.net/b16/ngrp:c7_vivo01_dai_source-20001_all/playlist.m3u8" data-tipo="hls" data-ciudad="Nacional" data-logo-text="TV PÚBLICA">
@@ -1745,5 +1746,20 @@ window.addEventListener("load", () => {
     actualizarVisibles();
 });
 </script>
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+            registration.unregister();
+        }
+    });
+    caches.keys().then(function(cacheNames) {
+        cacheNames.forEach(function(cacheName) {
+            caches.delete(cacheName);
+        });
+    });
+}
+
+</script>   
 </body>
 </html>
