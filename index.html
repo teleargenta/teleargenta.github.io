@@ -1678,8 +1678,7 @@ if ('serviceWorker' in navigator) {
 </footer>
 
     
-<script>
-let regionActual = "nacional";   
+javascript<script>
 let hlsInstance = null;
 let tarjetasVisibles = [];
 let indiceActual = -1;
@@ -1718,15 +1717,23 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
         video.autoplay = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.appendChild(video);
-        hlsInstance = new Hls({
-    enableWorker: true,
-    lowLatencyMode: true,
-    maxBufferLength: 10,
-    maxMaxBufferLength: 20,
-    maxBufferSize: 20 * 1000 * 1000,
-    startLevel: -1,
-    abrEwmaDefaultEstimate: 500000
-});
+        if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                maxBufferLength: 10,
+                maxMaxBufferLength: 20,
+                maxBufferSize: 20 * 1000 * 1000,
+                startLevel: -1,
+                abrEwmaDefaultEstimate: 500000
+            });
+            hlsInstance.loadSource(url);
+            hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.ERROR, function(e, data) {
+                if (data.fatal) {
+                    player.innerHTML = `<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#0a0a0a;"><img src="SMPTE.png" style="max-width:100%;max-height:100%;object-fit:contain;"></div>`;
+                }
+            });
         } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
             video.src = url;
         }
@@ -1781,13 +1788,8 @@ function filtrar(region) {
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".filters button").forEach(b => b.classList.remove("activo"));
     event.target.classList.add("activo");
-    regionActual = region;
-    renderCards();
-}
-
-function renderCards() {
     document.querySelectorAll(".card").forEach(card => {
-        card.style.display = (regionActual === "todas" || card.dataset.region === regionActual) ? "block" : "none";
+        card.style.display = (region === "todas" || card.dataset.region === region) ? "block" : "none";
     });
     actualizarVisibles();
 }
@@ -1810,9 +1812,7 @@ function actualizarVisibles() {
 window.addEventListener("load", () => {
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
     document.getElementById("contadorCanales").innerText = total + " canales disponibles";
-    renderCards();
-    document.querySelector(".filters button[onclick=\"filtrar('nacional')\"]").classList.add("activo");
-    document.querySelector(".filters button[onclick=\"filtrar('todas')\"]").classList.remove("activo");
+    actualizarVisibles();
 });
 </script>
 </body>
