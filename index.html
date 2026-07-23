@@ -1890,14 +1890,23 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
     document.getElementById("overlayTitulo").innerText = nombre;
     document.getElementById("overlayCiudad").innerText = ciudad ? "— " + ciudad : "";
     const total = tarjetasVisibles.length;
-    document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " " + total : "";
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " / " + total : "";
+    
+    if (hlsInstance) { 
+        hlsInstance.destroy(); 
+        hlsInstance = null; 
+    }
+    
     const player = document.getElementById("overlayPlayer");
     player.innerHTML = "";
 
     if (tipo === "yt") {
-        // Para cuando en data-url pones solo el ID del canal (ej: UCMy706Rhe2swaTmljCgiYVg)
-        player.innerHTML = `<iframe src="https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+        // Maneja tanto IDs simples (UC...) como URLs de playlist o embeds de YouTube
+        let embedUrl = url;
+        if (!url.startsWith("http")) {
+            embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
+        }
+        player.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
 
     } else if (tipo === "twitch") {
         player.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`;
@@ -1914,6 +1923,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
         video.autoplay = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.appendChild(video);
+
         if (Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
@@ -1922,7 +1932,13 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
                 maxMaxBufferLength: 20,
                 maxBufferSize: 20 * 1000 * 1000,
                 startLevel: -1,
-                abrEwmaDefaultEstimate: 500000
+                abrEwmaDefaultEstimate: 500000,
+                // Pasa los fragmentos .m3u8 y .ts por el proxy si el sitio es HTTPS y la URL es HTTP
+                xhrSetup: function(xhr, requestUrl) {
+                    if (location.protocol === 'https:' && requestUrl.startsWith('http:')) {
+                        xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(requestUrl), true);
+                    }
+                }
             });
             hlsInstance.loadSource(url);
             hlsInstance.attachMedia(video);
@@ -1947,12 +1963,10 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
             </div>`;
 
     } else {
-        // Bloque general para iframe (YouTube embeds directos, Dailymotion, Webs externas)
-        player.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>`;
+        // CORRECCIÓN CLAVE: Se eliminó el atributo sandbox para evitar el bloqueo de reproductores externos
+        player.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
     }
 }
-
-function cerrarOverlay() {
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     document.getElementById("overlay").classList.remove("activo");
     document.getElementById("overlayPlayer").innerHTML = "";
