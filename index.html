@@ -1859,11 +1859,9 @@ let indiceActual = -1;
 
 function abrirCanal(card) {
     const tipo   = card.dataset.tipo;
-    
-    // 1. MEJORA ANTI-404: Busca data-url, o en su defecto data-playlist o data-live
     const url    = card.dataset.url || card.dataset.playlist || card.dataset.live;
     const nombre = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
-    const ciudad = card.dataset.ciudad;
+    const ciudad = card.dataset.ciudad || "";
 
     if (tipo === "sin") return;
     if (tipo === "yt-link") { 
@@ -1871,7 +1869,6 @@ function abrirCanal(card) {
         return; 
     }
 
-    // Si la tarjeta no tiene ninguna URL configurada, detiene la ejecución y evita el 404
     if (!url || url === "undefined") {
         console.warn("La tarjeta no contiene una URL válida.");
         return;
@@ -1879,6 +1876,7 @@ function abrirCanal(card) {
 
     tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
         .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
+    
     indiceActual = tarjetasVisibles.indexOf(card);
     resaltarCard(card);
     cargarEnOverlay(url, tipo, nombre, ciudad);
@@ -1887,7 +1885,7 @@ function abrirCanal(card) {
 }
 
 function cargarEnOverlay(url, tipo, nombre, ciudad) {
-    document.getElementById("overlayTitulo").innerText = nombre;
+    document.getElementById("overlayTitulo").innerText = nombre || "";
     document.getElementById("overlayCiudad").innerText = ciudad ? "— " + ciudad : "";
     const total = tarjetasVisibles.length;
     document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " / " + total : "";
@@ -1901,7 +1899,6 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
     player.innerHTML = "";
 
     if (tipo === "yt") {
-        // Maneja tanto IDs simples (UC...) como URLs de playlist o embeds de YouTube
         let embedUrl = url;
         if (!url.startsWith("http")) {
             embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
@@ -1924,7 +1921,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.appendChild(video);
 
-        if (Hls.isSupported()) {
+        if (typeof Hls !== "undefined" && Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
                 lowLatencyMode: true,
@@ -1933,7 +1930,6 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
                 maxBufferSize: 20 * 1000 * 1000,
                 startLevel: -1,
                 abrEwmaDefaultEstimate: 500000,
-                // Pasa los fragmentos .m3u8 y .ts por el proxy si el sitio es HTTPS y la URL es HTTP
                 xhrSetup: function(xhr, requestUrl) {
                     if (location.protocol === 'https:' && requestUrl.startsWith('http:')) {
                         xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(requestUrl), true);
@@ -1963,10 +1959,11 @@ function cargarEnOverlay(url, tipo, nombre, ciudad) {
             </div>`;
 
     } else {
-        // CORRECCIÓN CLAVE: Se eliminó el atributo sandbox para evitar el bloqueo de reproductores externos
         player.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
     }
 }
+
+function cerrarOverlay() {
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     document.getElementById("overlay").classList.remove("activo");
     document.getElementById("overlayPlayer").innerHTML = "";
@@ -1980,7 +1977,7 @@ function canalSiguiente() {
     const card = tarjetasVisibles[indiceActual];
     resaltarCard(card);
     const url = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name").innerText, card.dataset.ciudad);
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad);
 }
 
 function canalAnterior() {
@@ -1989,7 +1986,7 @@ function canalAnterior() {
     const card = tarjetasVisibles[indiceActual];
     resaltarCard(card);
     const url = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name").innerText, card.dataset.ciudad);
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad);
 }
 
 function resaltarCard(card) {
@@ -2013,7 +2010,7 @@ document.addEventListener("keydown", e => {
 function filtrar(region) {
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".filters button").forEach(b => b.classList.remove("activo"));
-    event.target.classList.add("activo");
+    if (window.event && window.event.target) window.event.target.classList.add("activo");
     document.querySelectorAll(".card").forEach(card => {
         card.style.display = (region === "todas" || card.dataset.region === region) ? "block" : "none";
     });
@@ -2037,7 +2034,8 @@ function actualizarVisibles() {
 
 window.addEventListener("load", () => {
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
-    document.getElementById("contadorCanales").innerText = total + " canales disponibles";
+    const contador = document.getElementById("contadorCanales");
+    if (contador) contador.innerText = total + " canales disponibles";
     actualizarVisibles();
 });
 </script>
