@@ -8,6 +8,31 @@
     <meta property="og:description" content="Todos los canales de la televisión abierta argentina en un solo lugar." />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
+        /* 1. Contenedor del reproductor (Proporción 16:9 limpia) */
+.web-player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden; /* Corta todo lo que sobresalga */
+    background-color: #000;
+    border-radius: 8px;
+}
+
+/* 2. El iFrame expandido y reubicado */
+.web-player-container iframe {
+    position: absolute;
+    /* Ajustes para 'esconder' la barra superior y los costados de la web */
+    top: -90px;                  /* Eleva el iframe para ocultar el menú superior */
+    left: -4%;                   /* Oculta los márgenes izquierdos */
+    width: 108%;                 /* Agrandamos el ancho para compensar el ajuste lateral */
+    height: calc(100% + 140px);  /* Agrandamos la altura para tapar el pie de página */
+    border: none;
+    
+    /* Zoom suave para encuadrar la pantalla de video */
+    transform: scale(1.1);
+    transform-origin: center center;
+}
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; min-height: 100vh; }
         header { text-align: center; padding: 22px 20px 12px; background: linear-gradient(180deg,#111 0%,#0a0a0a 100%); border-bottom: 1px solid #1a1a1a; }
