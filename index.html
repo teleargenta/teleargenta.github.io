@@ -8,27 +8,33 @@
     <meta property="og:description" content="Todos los canales de la televisión abierta argentina en un solo lugar." />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        /* 1. Contenedor del reproductor (Proporción 16:9 limpia) */
+     /* Contenedor base para el reproductor (Proporción 16:9) */
 .web-player-container {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    overflow: hidden; /* Corta todo lo que sobresalga */
+    overflow: hidden;
     background-color: #000;
     border-radius: 8px;
 }
 
-/* 2. El iFrame expandido y reubicado */
+/* Estilo NORMAL (Para YouTube, Twitch y reproductores nativos) */
 .web-player-container iframe {
     position: absolute;
-    /* Ajustes para 'esconder' la barra superior y los costados de la web */
-    top: -90px;                  /* Eleva el iframe para ocultar el menú superior */
-    left: -4%;                   /* Oculta los márgenes izquierdos */
-    width: 108%;                 /* Agrandamos el ancho para compensar el ajuste lateral */
-    height: calc(100% + 140px);  /* Agrandamos la altura para tapar el pie de página */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     border: none;
-    
-    /* Zoom suave para encuadrar la pantalla de video */
+    transform: none; /* No aplica zoom para no romper YouTube */
+}
+
+/* Estilo RECORTE (Clase especial solo para canales tipo "web") */
+.web-player-container.modo-recorte iframe {
+    top: -90px;
+    left: -4%;
+    width: 108%;
+    height: calc(100% + 140px);
     transform: scale(1.1);
     transform-origin: center center;
 }
@@ -95,6 +101,24 @@
 <body>
 
 <script>
+function reproducirCanal(card) {
+    const url = card.getAttribute('data-url');
+    const tipo = card.getAttribute('data-tipo');
+    
+    const contenedor = document.querySelector('.web-player-container');
+    const iframe = contenedor.querySelector('iframe');
+    
+    // Carga la URL
+    iframe.src = url;
+
+    // Aplica el recorte SOLO si es tipo "web"
+    if (tipo === 'web') {
+        contenedor.classList.add('modo-recorte');
+    } else {
+        contenedor.classList.remove('modo-recorte');
+    }
+}
+    
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) { registration.unregister(); }
