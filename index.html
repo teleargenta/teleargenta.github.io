@@ -2289,9 +2289,15 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
                     player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
                 }
             });
-        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = url;
-        }
+   } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = url;
+    video.addEventListener("error", function() {
+        player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+    });
+} else {
+    // Ni hls.js ni soporte nativo: mostrar barra directamente
+    player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+}
 
     } else if (tipo === "mp3") {
         player.innerHTML = `
