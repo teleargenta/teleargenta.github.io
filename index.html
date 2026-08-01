@@ -58,6 +58,7 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .btn-nav { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 32px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
 .btn-nav:hover, .btn-nav:focus { background: #e50914; border-color: #e50914; outline: none; }
 .overlay-canal-info { color: #555; font-size: 12px; min-width: 80px; text-align: center; }
+.hint-remoto { color: #444; font-size: 12px; margin-right: auto; }
 .btn-toggle-menu { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
 .btn-toggle-menu:hover, .btn-toggle-menu:focus, .btn-toggle-menu.activo { background: #e50914; border-color: #e50914; outline: none; }
 .filters { display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px; scrollbar-width: none; background: #0d0d0d; }
@@ -205,10 +206,9 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <div class="overlay-nav">
-        <button class="btn-nav" onclick="canalAnterior()">◀ Anterior</button>
+        <span class="hint-remoto">◀ ▶ cambiar canal &nbsp;•&nbsp; OK menú &nbsp;•&nbsp; atrás salir</span>
         <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
         <div class="overlay-canal-info" id="overlayInfo"></div>
-        <button class="btn-nav" onclick="canalSiguiente()">Siguiente ▶</button>
     </div>
 </div>
 <div class="filters">
@@ -226,7 +226,6 @@ if ('serviceWorker' in navigator) {
     <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
 </div>
 <div class="grid" id="grid">
-
 
 
     
@@ -2570,7 +2569,10 @@ document.addEventListener("keydown", e => {
 
     if (e.key === "ArrowRight") canalSiguiente();
     if (e.key === "ArrowLeft")  canalAnterior();
-    if (e.key === "ArrowUp")    toggleMenuCanales();
+    if (e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleMenuCanales();
+    }
 });
 
 function filtrar(region) {
