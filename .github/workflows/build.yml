@@ -197,13 +197,14 @@ jobs:
           }
           EOF
 
-      - name: Configurar Gradle 8.5
+      - name: Configurar Gradle 8.5 (sin caché)
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.5'
+          cache-disabled: true
 
       - name: Compilar APK (Debug)
-        run: gradle assembleDebug
+        run: gradle assembleDebug --no-daemon
 
       - name: Subir APK descargable
         uses: actions/upload-artifact@v4
