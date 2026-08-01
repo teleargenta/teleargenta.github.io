@@ -1,7 +1,7 @@
 name: Compilar APK Android (TeleArgenta)
 
 on:
-  workflow_dispatch: # Permite ejecutar la compilación manualmente con un botón
+  workflow_dispatch: # Botón manual para compilar
 
 jobs:
   build:
@@ -17,13 +17,193 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Dar permisos de ejecución a Gradle
-        run: chmod +x gradlew || true
+      - name: Generar estructura de proyecto Android
+        run: |
+          # 1. Crear directorios necesarios
+          mkdir -p app/src/main/java/com/teleargenta/app
+          mkdir -p app/src/main/res/layout
+
+          # 2. Configuración general de Gradle
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "TeleArgenta"
+          include(":app")
+          EOF
+
+          # 3. Build script raíz
+          cat << 'EOF' > build.gradle
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.2.2'
+                  classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
+              }
+          }
+          EOF
+
+          # 4. Build script del módulo App
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+              id 'org.jetbrains.kotlin.android'
+          }
+
+          android {
+              namespace 'com.teleargenta.app'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.teleargenta.app"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = '17'
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.core:core-ktx:1.12.0'
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          EOF
+
+          # 5. AndroidManifest.xml
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+              <uses-feature android:name="android.software.leanback" android:required="false" />
+
+              <application
+                  android:allowBackup="true"
+                  android:label="TeleArgenta"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          # 6. Layout activity_main.xml
+          cat << 'EOF' > app/src/main/res/layout/activity_main.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#000000">
+              <WebView
+                  android:id="@+id/webView"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent" />
+          </FrameLayout>
+          EOF
+
+          # 7. Código Kotlin MainActivity.kt
+          cat << 'EOF' > app/src/main/java/com/teleargenta/app/MainActivity.kt
+          package com.teleargenta.app
+
+          import android.annotation.SuppressLint
+          import android.os.Bundle
+          import android.view.KeyEvent
+          import android.webkit.WebSettings
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
+          import androidx.appcompat.app.AppCompatActivity
+
+          class MainActivity : AppCompatActivity() {
+
+              private lateinit var webView: WebView
+
+              @SuppressLint("SetJavaScriptEnabled")
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+                  setContentView(R.layout.activity_main)
+
+                  webView = findViewById(R.id.webView)
+                  val settings: WebSettings = webView.settings
+                  settings.javaScriptEnabled = true
+                  settings.domStorageEnabled = true
+                  settings.mediaPlaybackRequiresUserGesture = false
+                  settings.useWideViewPort = true
+                  settings.loadWithOverviewMode = true
+                  settings.mixContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+
+                  webView.webViewClient = object : WebViewClient() {
+                      override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                          return false
+                      }
+                  }
+
+                  webView.loadUrl("https://teleargenta.github.io/")
+              }
+
+              override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+                  if (event.action == KeyEvent.ACTION_DOWN) {
+                      when (event.keyCode) {
+                          KeyEvent.KEYCODE_BACK -> {
+                              webView.evaluateJavascript(
+                                  "document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape', 'keyCode': 27}));",
+                                  null
+                              )
+                              return true
+                          }
+                          KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                              webView.evaluateJavascript(
+                                  "if (!document.getElementById('canalMenu').classList.contains('activo')) { toggleMenuCanales(); }",
+                                  null
+                              )
+                          }
+                      }
+                  }
+                  return super.dispatchKeyEvent(event)
+              }
+          }
+          EOF
+
+      - name: Instalar Gradle e Inicializar Wrapper
+        run: |
+          sudo apt-get update && sudo apt-get install -y gradle
+          gradle wrapper
 
       - name: Compilar APK (Debug)
         run: ./gradlew assembleDebug
 
-      - name: Subir APK como artefacto descargable
+      - name: Subir APK descargable
         uses: actions/upload-artifact@v4
         with:
           name: TeleArgenta-APK
