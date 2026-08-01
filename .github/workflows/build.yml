@@ -24,7 +24,6 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/teleargenta/app
           mkdir -p app/src/main/res/layout
-          mkdir -p gradle/wrapper
 
           # 1. settings.gradle
           cat << 'EOF' > settings.gradle
@@ -198,19 +197,10 @@ jobs:
           }
           EOF
 
-          # 7. Configurar versión de Gradle Wrapper 8.5
-          cat << 'EOF' > gradle/wrapper/gradle-wrapper.properties
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
-          networkTimeout=10000
-          validateDistributionUrl=true
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-
-      - name: Configurar Entorno de Gradle
+      - name: Configurar Gradle 8.5
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
       - name: Compilar APK (Debug)
         run: gradle assembleDebug
