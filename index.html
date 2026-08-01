@@ -59,6 +59,11 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .btn-nav:hover, .btn-nav:focus { background: #e50914; border-color: #e50914; outline: none; }
 .overlay-canal-info { color: #555; font-size: 12px; min-width: 80px; text-align: center; }
 .hint-remoto { color: #444; font-size: 12px; margin-right: auto; }
+.hint-touch { display: none; }
+@media (pointer: coarse) {
+    .hint-teclado { display: none; }
+    .hint-touch { display: inline; }
+}
 .btn-toggle-menu { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
 .btn-toggle-menu:hover, .btn-toggle-menu:focus, .btn-toggle-menu.activo { background: #e50914; border-color: #e50914; outline: none; }
 .filters { display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px; scrollbar-width: none; background: #0d0d0d; }
@@ -149,7 +154,7 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
     font-size: 14px;
     font-weight: bold;
 }
-.canal-menu-item:hover, .canal-menu-item:focus {
+.canal-menu-item:hover, .canal-menu-item:focus, .canal-menu-item.seleccionado {
     background: #e50914;
     color: #fff;
     outline: none;
@@ -206,7 +211,8 @@ if ('serviceWorker' in navigator) {
         </div>
     </div>
     <div class="overlay-nav">
-        <span class="hint-remoto">◀ ▶ cambiar canal &nbsp;•&nbsp; OK menú &nbsp;•&nbsp; atrás salir</span>
+        <span class="hint-remoto hint-teclado">◀ ▶ cambiar canal &nbsp;•&nbsp; OK menú &nbsp;•&nbsp; atrás salir</span>
+        <span class="hint-remoto hint-touch">deslizá para cambiar de canal</span>
         <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
         <div class="overlay-canal-info" id="overlayInfo"></div>
     </div>
@@ -226,7 +232,6 @@ if ('serviceWorker' in navigator) {
     <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
 </div>
 <div class="grid" id="grid">
-
 
     
 <!-- === NACIONAL === -->
@@ -2467,6 +2472,7 @@ function resaltarCard(card) {
 
 // NUEVO: menú de canales dentro del overlay (todos / por región), sin salir del video
 let regionMenuIndex = 0;
+let cursorMenu = 0; // índice del canal "seleccionado" dentro del menú, manejado 100% a mano
 function toggleMenuCanales() {
     const menu = document.getElementById("canalMenu");
     const btn = document.getElementById("btnToggleMenu");
@@ -2476,29 +2482,31 @@ function toggleMenuCanales() {
     if (abrir) {
         regionMenuIndex = 0;
         poblarMenuCanales(REGIONES[regionMenuIndex]);
-        const lista = document.getElementById("menuLista");
-        lista.scrollTop = 0;
-        const primerItem = document.querySelector("#menuLista .canal-menu-item");
-        if (primerItem) primerItem.focus();
     }
 }
-// NUEVO: cambia de región dentro del menú y reinicia el scroll/foco a la lista nueva
+// NUEVO: cambia de región dentro del menú y reinicia el cursor a la lista nueva
 function cambiarRegionMenu(direccion) {
     regionMenuIndex = (regionMenuIndex + direccion + REGIONES.length) % REGIONES.length;
     poblarMenuCanales(REGIONES[regionMenuIndex]);
-    const lista = document.getElementById("menuLista");
-    lista.scrollTop = 0;
-    const primerItem = document.querySelector("#menuLista .canal-menu-item");
-    if (primerItem) primerItem.focus();
 }
-// NUEVO: mueve el foco entre canales del menú y fuerza el scroll (el TV no lo hace solo)
+// NUEVO: mueve el "cursor" entre canales del menú a mano (sin usar el foco nativo del navegador,
+// que en varios TV/Fire Stick/ONN no hace scroll y se traba en los primeros elementos visibles)
 function moverFocoMenu(direccion) {
     const items = Array.from(document.querySelectorAll("#menuLista .canal-menu-item"));
     if (!items.length) return;
-    let idx = items.indexOf(document.activeElement);
-    idx = idx === -1 ? 0 : (idx + direccion + items.length) % items.length;
-    items[idx].focus();
-    items[idx].scrollIntoView({ block: "nearest" });
+    cursorMenu = (cursorMenu + direccion + items.length) % items.length;
+    marcarCursorMenu(items);
+}
+function marcarCursorMenu(items) {
+    items = items || Array.from(document.querySelectorAll("#menuLista .canal-menu-item"));
+    if (!items.length) return;
+    if (cursorMenu >= items.length) cursorMenu = 0;
+    items.forEach((it, i) => it.classList.toggle("seleccionado", i === cursorMenu));
+    const activo = items[cursorMenu];
+    const lista = document.getElementById("menuLista");
+    // Scroll manual: centramos el elemento seleccionado dentro del panel
+    const destino = activo.offsetTop - (lista.clientHeight / 2) + (activo.clientHeight / 2);
+    lista.scrollTop = Math.max(0, destino);
 }
 function poblarMenuCanales(region) {
     const menuFilters = document.getElementById("menuFilters");
@@ -2512,19 +2520,23 @@ function poblarMenuCanales(region) {
         .filter(c => region === "todas" || c.dataset.region === region);
 
     lista.innerHTML = "";
+    lista.scrollTop = 0;
+    cursorMenu = 0;
     cards.forEach(card => {
         const item = document.createElement("div");
         item.className = "canal-menu-item";
-        item.tabIndex = 0;
-        item.innerText = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
+        // NOTA: sin tabindex a propósito — evitamos que el navegador del TV
+        // tome el foco nativo, que en varios dispositivos no hace scroll.
+        item.innerText = (card.dataset.canalNum ? card.dataset.canalNum + " • " : "") +
+            (card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "");
         const seleccionar = () => {
             abrirCanal(card);
             toggleMenuCanales();
         };
         item.onclick = seleccionar;
-        item.addEventListener("keydown", e => { if (e.key === "Enter") seleccionar(); });
         lista.appendChild(item);
     });
+    marcarCursorMenu();
 }
 
 document.getElementById("grid").addEventListener("click", function(e) {
@@ -2534,8 +2546,65 @@ document.getElementById("grid").addEventListener("click", function(e) {
     abrirCanal(card);
 });
 
+// NUEVO: swipe táctil para cambiar de canal en celular (no tiene flechas de teclado)
+(function() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const player = document.getElementById("overlayPlayer");
+    player.addEventListener("touchstart", e => {
+        touchStartX = e.changedTouches[0].clientX;
+        touchStartY = e.changedTouches[0].clientY;
+    }, { passive: true });
+    player.addEventListener("touchend", e => {
+        const menu = document.getElementById("canalMenu");
+        if (menu && menu.classList.contains("activo")) return; // no interferir con el scroll del menú
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (dx < 0) canalSiguiente(); else canalAnterior();
+        }
+    }, { passive: true });
+})();
+
 // NUEVO: teclado / control remoto — solo actúa mientras el overlay está abierto,
 // para no interferir con la búsqueda o la navegación de la grilla principal.
+// NUEVO: salto directo a un canal tecleando su número (como en cualquier TV con control remoto)
+let bufferNumero = "";
+let bufferTimeout = null;
+function irACanalPorNumero() {
+    const num = bufferNumero;
+    bufferNumero = "";
+    if (!num) return;
+    const card = document.querySelector(`.card[data-canal-num="${num}"]`);
+    if (card) abrirCanal(card);
+    ocultarIndicadorNumero();
+}
+function mostrarIndicadorNumero() {
+    let ind = document.getElementById("indicadorNumero");
+    if (!ind) {
+        ind = document.createElement("div");
+        ind.id = "indicadorNumero";
+        ind.style.cssText = "position:fixed;top:20px;right:20px;background:rgba(0,0,0,.85);color:#fff;font-size:28px;font-weight:900;padding:10px 22px;border-radius:10px;border:2px solid #e50914;z-index:1001;";
+        document.body.appendChild(ind);
+    }
+    ind.innerText = bufferNumero;
+}
+function ocultarIndicadorNumero() {
+    document.getElementById("indicadorNumero")?.remove();
+}
+
+document.addEventListener("keydown", e => {
+    if (!/^[0-9]$/.test(e.key)) return;
+    const overlayAbierto = document.getElementById("overlay").classList.contains("activo");
+    const menuAbierto = document.getElementById("canalMenu")?.classList.contains("activo");
+    if (menuAbierto) return; // dentro del menú los números no se usan
+    bufferNumero += e.key;
+    if (bufferNumero.length > 3) bufferNumero = bufferNumero.slice(-3); // máximo 3 dígitos (hasta 999)
+    mostrarIndicadorNumero();
+    clearTimeout(bufferTimeout);
+    bufferTimeout = setTimeout(irACanalPorNumero, 1500);
+});
+
 document.addEventListener("keydown", e => {
     const overlayEl = document.getElementById("overlay");
     const overlayAbierto = overlayEl.classList.contains("activo");
@@ -2562,7 +2631,8 @@ document.addEventListener("keydown", e => {
         if (e.key === "ArrowLeft")  { e.preventDefault(); cambiarRegionMenu(-1); }
         if (e.key === "Enter") {
             e.preventDefault();
-            document.activeElement?.click();
+            const items = document.querySelectorAll("#menuLista .canal-menu-item");
+            if (items[cursorMenu]) items[cursorMenu].click();
         }
         return;
     }
@@ -2613,6 +2683,14 @@ window.addEventListener("load", () => {
             c.addEventListener("keydown", e => {
                 if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirCanal(c); }
             });
+        }
+    });
+
+    // NUEVO: asignar número de canal (1, 2, 3...) a cada tarjeta, para poder buscarlo tecleando el número
+    let numero = 1;
+    document.querySelectorAll(".card").forEach(c => {
+        if (c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link") {
+            c.dataset.canalNum = numero++;
         }
     });
 });
