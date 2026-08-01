@@ -228,6 +228,7 @@ if ('serviceWorker' in navigator) {
 <div class="grid" id="grid">
 
 
+
     
 <!-- === NACIONAL === -->
 
@@ -2284,13 +2285,6 @@ function abrirCanal(card) {
     const overlayEl = document.getElementById("overlay");
     overlayEl.classList.add("activo");
     document.body.style.overflow = "hidden";
-
-    // NUEVO: pedir pantalla completa real (mejora sensible en Smart TV)
-    if (overlayEl.requestFullscreen) {
-        overlayEl.requestFullscreen().catch(() => {});
-    } else if (overlayEl.webkitRequestFullscreen) {
-        overlayEl.webkitRequestFullscreen();
-    }
 }
 
 // NUEVO: intenta reproducir con sonido; si el navegador lo bloquea, mutea y avisa al usuario
@@ -2441,13 +2435,6 @@ function cerrarOverlay() {
     document.getElementById("btnToggleMenu")?.classList.remove("activo");
     document.body.style.overflow = "";
     document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
-
-    // NUEVO: salir de pantalla completa al cerrar
-    if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-    } else if (document.webkitFullscreenElement) {
-        document.webkitExitFullscreen();
-    }
 }
 
 function canalSiguiente() {
@@ -2609,6 +2596,9 @@ function actualizarVisibles() {
         .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
 }
 window.addEventListener("load", () => {
+    // Intenta ocultar la barra superior del navegador del TV sin activar el fullscreen nativo
+    setTimeout(() => window.scrollTo(0, 1), 100);
+
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
     const contador = document.getElementById("contadorCanales");
     if (contador) contador.innerText = total + " canales disponibles";
