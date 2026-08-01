@@ -17,7 +17,6 @@
     background-color: #000;
     border-radius: 8px;
 }
-
 /* Estilo NORMAL (Para YouTube, Twitch y reproductores nativos) */
 .web-player-container iframe {
     position: absolute;
@@ -28,7 +27,6 @@
     border: none;
     transform: none; /* No aplica zoom para no romper YouTube */
 }
-
 /* Estilo RECORTE (Clase especial solo para canales tipo "web") */
 .web-player-container.modo-recorte iframe {
     top: -90px;
@@ -38,10 +36,7 @@
     transform: scale(1.1);
     transform-origin: center center;
 }
-        
-      Perfecto, acá está el CSS completo con el cambio de azul a rojo televisivo y la barra superior en el header:
 
-css
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; min-height: 100vh; }
 header { text-align: center; padding: 22px 20px 12px; background: linear-gradient(180deg,#111 0%,#0a0a0a 100%); border-bottom: 1px solid #1a1a1a; border-top: 4px solid #e50914; }
@@ -55,18 +50,21 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .overlay-titulo { font-size: 15px; font-weight: bold; color: #fff; }
 .overlay-ciudad { font-size: 11px; color: #555; margin-left: 8px; }
 .btn-cerrar { background: #e50914; border: none; color: #fff; padding: 9px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
-.btn-cerrar:hover { background: #b8070f; }
+.btn-cerrar:hover, .btn-cerrar:focus { background: #b8070f; outline: 3px solid #fff; }
 .overlay-player { flex: 1; width: 100%; background: #0a0a0a; position: relative; overflow: hidden; }
 .overlay-player iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 .overlay-player video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; }
-.overlay-nav { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 12px 16px; background: #111; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
+.overlay-nav { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 12px 16px; background: #111; border-top: 1px solid #1a1a1a; flex-shrink: 0; flex-wrap: wrap; }
 .btn-nav { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 32px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
 .btn-nav:hover, .btn-nav:focus { background: #e50914; border-color: #e50914; outline: none; }
 .overlay-canal-info { color: #555; font-size: 12px; min-width: 80px; text-align: center; }
+.btn-toggle-menu { background: #1a1a1a; border: 2px solid #333; color: #fff; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
+.btn-toggle-menu:hover, .btn-toggle-menu:focus, .btn-toggle-menu.activo { background: #e50914; border-color: #e50914; outline: none; }
 .filters { display: flex; overflow-x: auto; gap: 8px; padding: 10px 12px; scrollbar-width: none; background: #0d0d0d; }
 .filters::-webkit-scrollbar { display: none; }
 .filters button { padding: 7px 14px; border: 1px solid #333; border-radius: 20px; background: #1a1a1a; color: #bbb; cursor: pointer; font-size: 12px; white-space: nowrap; transition: 0.2s; }
 .filters button.activo { background: #e50914; border-color: #e50914; color: #fff; }
+.filters button:focus { outline: 3px solid #fff; }
 .search { width: 92%; margin: 8px auto; }
 .search input { width: 100%; padding: 11px 14px; border-radius: 10px; background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a; outline: none; font-size: 14px; }
 .search input:focus { border-color: #e50914; }
@@ -74,6 +72,7 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .card { background: #161616; border-radius: 12px; border: 1px solid #1e1e1e; padding: 14px 10px 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
 .card:hover { border-color: #e50914; background: #1a1010; transform: translateY(-2px); }
 .card.active { border-color: #e50914; background: #1a0a0a; }
+.card:focus { outline: 4px solid #e50914; outline-offset: 2px; border-color: #e50914; }
 .card[data-tipo="sin"] { cursor: default; opacity: 0.5; }
 .card[data-tipo="sin"]:hover { transform: none; border-color: #1e1e1e; background: #161616; }
 .card-logo-wrap { width: 80px; height: 42px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
@@ -100,22 +99,74 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
 @media (max-width: 480px) { .grid { grid-template-columns: 1fr; gap: 8px; padding: 8px; } .logo-texto { font-size: 1.4rem; } .btn-nav { padding: 10px 20px; font-size: 14px; } }
 @media (min-width: 1200px) { .btn-nav { padding: 14px 40px; font-size: 18px; } .btn-cerrar { padding: 12px 28px; font-size: 16px; } .overlay-titulo { font-size: 18px; } }
 
+/* ---- NUEVO: aviso de sonido bloqueado por autoplay ---- */
+.aviso-sonido {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.9);
+    color: #fff;
+    padding: 16px 30px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 6;
+    cursor: pointer;
+    border: 2px solid #e50914;
+}
+.aviso-sonido:focus { outline: 3px solid #fff; }
 
+/* ---- NUEVO: menú de canales dentro del overlay (panel lateral) ---- */
+.canal-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 320px;
+    max-width: 85%;
+    background: #0d0d0d;
+    border-left: 2px solid #1e1e1e;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    overflow-y: auto;
+    z-index: 5;
+    padding: 12px;
+}
+.canal-menu.activo { transform: translateX(0); }
+.canal-menu .filters { padding: 0 0 10px; background: transparent; }
+.canal-menu-lista { display: flex; flex-direction: column; gap: 6px; }
+.canal-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #161616;
+    border: 2px solid transparent;
+    color: #ddd;
+    font-size: 14px;
+    font-weight: bold;
+}
+.canal-menu-item:hover, .canal-menu-item:focus {
+    background: #e50914;
+    color: #fff;
+    outline: none;
+    border-color: #fff;
+}
     </style>
 </head>
 <body>
-
 <script>
 function reproducirCanal(card) {
     const url = card.getAttribute('data-url');
     const tipo = card.getAttribute('data-tipo');
-    
+
     const contenedor = document.querySelector('.web-player-container');
     const iframe = contenedor.querySelector('iframe');
-    
+
     // Carga la URL
     iframe.src = url;
-
     // Aplica el recorte SOLO si es tipo "web"
     if (tipo === 'web') {
         contenedor.classList.add('modo-recorte');
@@ -123,7 +174,7 @@ function reproducirCanal(card) {
         contenedor.classList.remove('modo-recorte');
     }
 }
-    
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) { registration.unregister(); }
@@ -133,13 +184,11 @@ if ('serviceWorker' in navigator) {
     });
 }
 </script>
-
 <header>
     <h1 class="logo-texto"><span class="parentesis">(</span>TELE<span class="parentesis">)</span>ARGENTA</h1>
     <span class="logo-sub">TELEVISIÓN ABIERTA EN VIVO</span>
     <span class="logo-contador" id="contadorCanales"></span>
 </header>
-
 <div class="overlay" id="overlay">
     <div class="overlay-header">
         <div>
@@ -148,14 +197,20 @@ if ('serviceWorker' in navigator) {
         </div>
         <button class="btn-cerrar" onclick="cerrarOverlay()">✕ Cerrar</button>
     </div>
-    <div class="overlay-player" id="overlayPlayer"></div>
+    <div class="overlay-player" id="overlayPlayer">
+        <!-- NUEVO: menú lateral de canales, vive dentro del reproductor para superponerse al video -->
+        <div class="canal-menu" id="canalMenu">
+            <div class="filters" id="menuFilters"></div>
+            <div class="canal-menu-lista" id="menuLista"></div>
+        </div>
+    </div>
     <div class="overlay-nav">
         <button class="btn-nav" onclick="canalAnterior()">◀ Anterior</button>
+        <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
         <div class="overlay-canal-info" id="overlayInfo"></div>
         <button class="btn-nav" onclick="canalSiguiente()">Siguiente ▶</button>
     </div>
 </div>
-
 <div class="filters">
     <button onclick="filtrar('todas')" class="activo">Todas</button>
     <button onclick="filtrar('nacional')">Nacional TDA</button>
@@ -171,6 +226,7 @@ if ('serviceWorker' in navigator) {
     <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
 </div>
 <div class="grid" id="grid">
+
     
 <!-- === NACIONAL === -->
 
@@ -2188,46 +2244,76 @@ if ('serviceWorker' in navigator) {
 
  </div><!-- fin grid -->
 
+</div>
 <footer>
     <p>© 2026 TeleArgenta — Televisión abierta en vivo</p>
     <a href="mailto:teleargenta@gmail.com" class="btn-contacto">📧 Sugerí un canal</a>
 </footer>
-
 <script>
 let hlsInstance = null;
 let tarjetasVisibles = [];
 let indiceActual = -1;
+const REGIONES = ["todas","nacional","amba","bsas","centro","norte","cuyo","patagonia","internacional"];
 
 function abrirCanal(card) {
     const tipo     = card.dataset.tipo;
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
     const nombre   = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
     const ciudad   = card.dataset.ciudad || "";
-
     // Captura los valores de recorte personalizados de la tarjeta
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
-
     if (tipo === "sin") return;
-    if (tipo === "yt-link") { 
-        if (url) window.open(url, "_blank"); 
-        return; 
+    if (tipo === "yt-link") {
+        if (url) window.open(url, "_blank");
+        return;
     }
-
     if (!url || url === "undefined") {
         console.warn("La tarjeta no contiene una URL válida.");
         return;
     }
-
     tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
         .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
-    
+
     indiceActual = tarjetasVisibles.indexOf(card);
     resaltarCard(card);
     cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom);
-    document.getElementById("overlay").classList.add("activo");
+
+    const overlayEl = document.getElementById("overlay");
+    overlayEl.classList.add("activo");
     document.body.style.overflow = "hidden";
+
+    // NUEVO: pedir pantalla completa real (mejora sensible en Smart TV)
+    if (overlayEl.requestFullscreen) {
+        overlayEl.requestFullscreen().catch(() => {});
+    } else if (overlayEl.webkitRequestFullscreen) {
+        overlayEl.webkitRequestFullscreen();
+    }
+}
+
+// NUEVO: intenta reproducir con sonido; si el navegador lo bloquea, mutea y avisa al usuario
+function intentarReproducir(video, player) {
+    const promesa = video.play();
+    if (promesa !== undefined) {
+        promesa.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+            mostrarAvisoSonido(player, video);
+        });
+    }
+}
+function mostrarAvisoSonido(player, video) {
+    const previo = player.querySelector(".aviso-sonido");
+    if (previo) previo.remove();
+    const aviso = document.createElement("div");
+    aviso.className = "aviso-sonido";
+    aviso.tabIndex = 0;
+    aviso.innerText = "🔊 Tocá para activar el sonido";
+    const activar = () => { video.muted = false; video.play().catch(() => {}); aviso.remove(); };
+    aviso.onclick = activar;
+    aviso.addEventListener("keydown", e => { if (e.key === "Enter") activar(); });
+    player.appendChild(aviso);
 }
 
 function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
@@ -2235,38 +2321,40 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
     document.getElementById("overlayCiudad").innerText = ciudad ? "— " + ciudad : "";
     const total = tarjetasVisibles.length;
     document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " / " + total : "";
-    
-    if (hlsInstance) { 
-        hlsInstance.destroy(); 
-        hlsInstance = null; 
+
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
     }
-    
     const player = document.getElementById("overlayPlayer");
     player.innerHTML = "";
+    // Se vuelve a insertar el menú de canales (se había borrado con innerHTML = "")
+    const menu = document.createElement("div");
+    menu.className = "canal-menu";
+    menu.id = "canalMenu";
+    menu.innerHTML = `<div class="filters" id="menuFilters"></div><div class="canal-menu-lista" id="menuLista"></div>`;
+    player.appendChild(menu);
 
     if (tipo === "yt") {
         let embedUrl = url;
         if (!url.startsWith("http")) {
             embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
         }
-        player.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
     } else if (tipo === "twitch") {
-        player.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`;
-
+        player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`);
     } else if (tipo === "ebu") {
-        player.innerHTML = `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
-
+        player.insertAdjacentHTML("afterbegin", `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`);
     } else if (tipo === "mp4") {
-        player.innerHTML = `<video src="${url}" controls autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"></video>`;
-
+        player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" controls autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
+        const v = document.getElementById("videoMp4");
+        if (v) intentarReproducir(v, player);
     } else if (tipo === "hls") {
         const video = document.createElement("video");
         video.controls = true;
         video.autoplay = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
-        player.appendChild(video);
-
+        player.insertBefore(video, player.firstChild);
         if (typeof Hls !== "undefined" && Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
@@ -2284,23 +2372,28 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
             });
             hlsInstance.loadSource(url);
             hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                intentarReproducir(video, player);
+            });
             hlsInstance.on(Hls.Events.ERROR, function(e, data) {
                 if (data.fatal) {
                     player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                    player.appendChild(menu);
                 }
             });
-   } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = url;
-    video.addEventListener("error", function() {
-        player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
-    });
-} else {
-    // Ni hls.js ni soporte nativo: mostrar barra directamente
-    player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
-}
-
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = url;
+            video.addEventListener("error", function() {
+                player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                player.appendChild(menu);
+            });
+            intentarReproducir(video, player);
+        } else {
+            player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+            player.appendChild(menu);
+        }
     } else if (tipo === "mp3") {
-        player.innerHTML = `
+        player.insertAdjacentHTML("afterbegin", `
             <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;gap:20px;">
                 <div style="font-size:3rem;">📻</div>
                 <div style="color:#fff;font-size:16px;font-weight:bold;">${nombre}</div>
@@ -2308,12 +2401,11 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
                 <audio controls autoplay style="width:80%;max-width:400px;">
                     <source src="${url}" type="audio/mpeg">
                 </audio>
-            </div>`;
-
+            </div>`);
     } else {
         // Carga estándar para tipo "web", "iframe", "kick", "vimeo", etc.
-        player.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-        
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
         // Aplica recorte milimétrico SOLO si es tipo "web"
         if (tipo === "web") {
             const iframe = player.querySelector("iframe");
@@ -2328,14 +2420,30 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
             }
         }
     }
+
+    // Si el menú de canales estaba abierto al cambiar de canal, lo mantenemos poblado
+    if (document.getElementById("btnToggleMenu").classList.contains("activo")) {
+        const regionActiva = document.querySelector("#menuFilters button.activo");
+        poblarMenuCanales(regionActiva ? regionActiva.dataset.region : "todas");
+        document.getElementById("canalMenu").classList.add("activo");
+    }
 }
 
 function cerrarOverlay() {
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
     document.getElementById("overlay").classList.remove("activo");
     document.getElementById("overlayPlayer").innerHTML = "";
+    document.getElementById("canalMenu")?.classList.remove("activo");
+    document.getElementById("btnToggleMenu")?.classList.remove("activo");
     document.body.style.overflow = "";
     document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+
+    // NUEVO: salir de pantalla completa al cerrar
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    } else if (document.webkitFullscreenElement) {
+        document.webkitExitFullscreen();
+    }
 }
 
 function canalSiguiente() {
@@ -2343,32 +2451,68 @@ function canalSiguiente() {
     indiceActual = (indiceActual + 1) % tarjetasVisibles.length;
     const card = tarjetasVisibles[indiceActual];
     resaltarCard(card);
-    
+
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    
     cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
 }
-
 function canalAnterior() {
     if (!tarjetasVisibles.length) return;
     indiceActual = (indiceActual - 1 + tarjetasVisibles.length) % tarjetasVisibles.length;
     const card = tarjetasVisibles[indiceActual];
     resaltarCard(card);
-    
+
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    
     cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
 }
-
 function resaltarCard(card) {
     document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
     card.classList.add("active");
+}
+
+// NUEVO: menú de canales dentro del overlay (todos / por región), sin salir del video
+function toggleMenuCanales() {
+    const menu = document.getElementById("canalMenu");
+    const btn = document.getElementById("btnToggleMenu");
+    const abrir = !menu.classList.contains("activo");
+    menu.classList.toggle("activo", abrir);
+    btn.classList.toggle("activo", abrir);
+    if (abrir) {
+        poblarMenuCanales("todas");
+        const primerItem = document.querySelector("#menuLista .canal-menu-item");
+        if (primerItem) primerItem.focus();
+    }
+}
+function poblarMenuCanales(region) {
+    const menuFilters = document.getElementById("menuFilters");
+    menuFilters.innerHTML = REGIONES.map(r =>
+        `<button data-region="${r}" class="${r === region ? 'activo' : ''}" onclick="poblarMenuCanales('${r}')">${r === 'todas' ? 'Todas' : r}</button>`
+    ).join('');
+
+    const lista = document.getElementById("menuLista");
+    const cards = Array.from(document.querySelectorAll(".card"))
+        .filter(c => c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link")
+        .filter(c => region === "todas" || c.dataset.region === region);
+
+    lista.innerHTML = "";
+    cards.forEach(card => {
+        const item = document.createElement("div");
+        item.className = "canal-menu-item";
+        item.tabIndex = 0;
+        item.innerText = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
+        const seleccionar = () => {
+            abrirCanal(card);
+            toggleMenuCanales();
+        };
+        item.onclick = seleccionar;
+        item.addEventListener("keydown", e => { if (e.key === "Enter") seleccionar(); });
+        lista.appendChild(item);
+    });
 }
 
 document.getElementById("grid").addEventListener("click", function(e) {
@@ -2378,10 +2522,30 @@ document.getElementById("grid").addEventListener("click", function(e) {
     abrirCanal(card);
 });
 
+// NUEVO: teclado / control remoto — solo actúa mientras el overlay está abierto,
+// para no interferir con la búsqueda o la navegación de la grilla principal.
 document.addEventListener("keydown", e => {
-    if (e.key === "Escape")      cerrarOverlay();
+    const overlayEl = document.getElementById("overlay");
+    const overlayAbierto = overlayEl.classList.contains("activo");
+    if (!overlayAbierto) return;
+
+    const menu = document.getElementById("canalMenu");
+    const menuAbierto = menu && menu.classList.contains("activo");
+
+    if (e.key === "Escape" || e.key === "Backspace") {
+        e.preventDefault();
+        if (menuAbierto) {
+            toggleMenuCanales();
+        } else {
+            cerrarOverlay();
+        }
+        return;
+    }
+    if (menuAbierto) return; // dentro del menú, dejamos que Tab/flechas naveguen los items normalmente
+
     if (e.key === "ArrowRight") canalSiguiente();
     if (e.key === "ArrowLeft")  canalAnterior();
+    if (e.key === "ArrowUp")    toggleMenuCanales();
 });
 
 function filtrar(region) {
@@ -2393,7 +2557,6 @@ function filtrar(region) {
     });
     actualizarVisibles();
 }
-
 function buscar() {
     const input = document.getElementById("searchInput").value.toLowerCase();
     document.querySelectorAll(".filters button").forEach(b => b.classList.remove("activo"));
@@ -2403,18 +2566,26 @@ function buscar() {
     });
     actualizarVisibles();
 }
-
 function actualizarVisibles() {
     tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
         .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
 }
-
 window.addEventListener("load", () => {
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
     const contador = document.getElementById("contadorCanales");
     if (contador) contador.innerText = total + " canales disponibles";
     actualizarVisibles();
+
+    // NUEVO: hacer las tarjetas focuseables y activables con Enter (navegación por control remoto)
+    document.querySelectorAll(".card").forEach(c => {
+        if (c.dataset.tipo !== "sin") {
+            c.tabIndex = 0;
+            c.addEventListener("keydown", e => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirCanal(c); }
+            });
+        }
+    });
 });
 </script>
-</body> 
-</html>   
+</body>
+</html>
