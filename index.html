@@ -227,6 +227,7 @@ if ('serviceWorker' in navigator) {
 </div>
 <div class="grid" id="grid">
 
+
     
 <!-- === NACIONAL === -->
 
@@ -2346,13 +2347,16 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
     } else if (tipo === "ebu") {
         player.insertAdjacentHTML("afterbegin", `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`);
     } else if (tipo === "mp4") {
-        player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" controls autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
+        player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" autoplay playsinline webkit-playsinline="true" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
         const v = document.getElementById("videoMp4");
         if (v) intentarReproducir(v, player);
     } else if (tipo === "hls") {
         const video = document.createElement("video");
-        video.controls = true;
         video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute("webkit-playsinline", "true");
+        video.setAttribute("x5-playsinline", "true");
+        video.disablePictureInPicture = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.insertBefore(video, player.firstChild);
         if (typeof Hls !== "undefined" && Hls.isSupported()) {
@@ -2476,6 +2480,7 @@ function resaltarCard(card) {
 }
 
 // NUEVO: menú de canales dentro del overlay (todos / por región), sin salir del video
+let regionMenuIndex = 0;
 function toggleMenuCanales() {
     const menu = document.getElementById("canalMenu");
     const btn = document.getElementById("btnToggleMenu");
@@ -2483,15 +2488,36 @@ function toggleMenuCanales() {
     menu.classList.toggle("activo", abrir);
     btn.classList.toggle("activo", abrir);
     if (abrir) {
-        poblarMenuCanales("todas");
+        regionMenuIndex = 0;
+        poblarMenuCanales(REGIONES[regionMenuIndex]);
+        const lista = document.getElementById("menuLista");
+        lista.scrollTop = 0;
         const primerItem = document.querySelector("#menuLista .canal-menu-item");
         if (primerItem) primerItem.focus();
     }
 }
+// NUEVO: cambia de región dentro del menú y reinicia el scroll/foco a la lista nueva
+function cambiarRegionMenu(direccion) {
+    regionMenuIndex = (regionMenuIndex + direccion + REGIONES.length) % REGIONES.length;
+    poblarMenuCanales(REGIONES[regionMenuIndex]);
+    const lista = document.getElementById("menuLista");
+    lista.scrollTop = 0;
+    const primerItem = document.querySelector("#menuLista .canal-menu-item");
+    if (primerItem) primerItem.focus();
+}
+// NUEVO: mueve el foco entre canales del menú y fuerza el scroll (el TV no lo hace solo)
+function moverFocoMenu(direccion) {
+    const items = Array.from(document.querySelectorAll("#menuLista .canal-menu-item"));
+    if (!items.length) return;
+    let idx = items.indexOf(document.activeElement);
+    idx = idx === -1 ? 0 : (idx + direccion + items.length) % items.length;
+    items[idx].focus();
+    items[idx].scrollIntoView({ block: "nearest" });
+}
 function poblarMenuCanales(region) {
     const menuFilters = document.getElementById("menuFilters");
     menuFilters.innerHTML = REGIONES.map(r =>
-        `<button data-region="${r}" class="${r === region ? 'activo' : ''}" onclick="poblarMenuCanales('${r}')">${r === 'todas' ? 'Todas' : r}</button>`
+        `<button data-region="${r}" class="${r === region ? 'activo' : ''}" onclick="regionMenuIndex=${REGIONES.indexOf(r)};poblarMenuCanales('${r}')">${r === 'todas' ? 'Todas' : r}</button>`
     ).join('');
 
     const lista = document.getElementById("menuLista");
@@ -2541,7 +2567,19 @@ document.addEventListener("keydown", e => {
         }
         return;
     }
-    if (menuAbierto) return; // dentro del menú, dejamos que Tab/flechas naveguen los items normalmente
+    if (menuAbierto) {
+        // Dentro del menú: arriba/abajo = mover entre canales (con scroll forzado)
+        //                   izquierda/derecha = cambiar de región
+        if (e.key === "ArrowDown")  { e.preventDefault(); moverFocoMenu(1); }
+        if (e.key === "ArrowUp")    { e.preventDefault(); moverFocoMenu(-1); }
+        if (e.key === "ArrowRight") { e.preventDefault(); cambiarRegionMenu(1); }
+        if (e.key === "ArrowLeft")  { e.preventDefault(); cambiarRegionMenu(-1); }
+        if (e.key === "Enter") {
+            e.preventDefault();
+            document.activeElement?.click();
+        }
+        return;
+    }
 
     if (e.key === "ArrowRight") canalSiguiente();
     if (e.key === "ArrowLeft")  canalAnterior();
