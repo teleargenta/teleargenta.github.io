@@ -2244,7 +2244,225 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
     <a href="mailto:teleargenta@gmail.com" class="btn-contacto">📧 Sugerí un canal</a>
 </footer>
 
-const menu = document.getElementById("canalMenu");
+<script>
+let hlsInstance = null;
+let tarjetasVisibles = [];
+let indiceActual = -1;
+const REGIONES = ["todas","nacional","amba","bsas","centro","norte","cuyo","patagonia","internacional"];
+
+function abrirCanal(card) {
+    const tipo     = card.dataset.tipo;
+    const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
+    const nombre   = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
+    const ciudad   = card.dataset.ciudad || "";
+    // Captura los valores de recorte personalizados de la tarjeta
+    const cropTop  = card.dataset.cropTop  || "-90px";
+    const cropLeft = card.dataset.cropLeft || "-4%";
+    const zoom     = card.dataset.zoom     || "1.1";
+    if (tipo === "sin") return;
+    if (tipo === "yt-link") {
+        if (url) window.open(url, "_blank");
+        return;
+    }
+    if (!url || url === "undefined") {
+        console.warn("La tarjeta no contiene una URL válida.");
+        return;
+    }
+    tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
+        .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
+
+    indiceActual = tarjetasVisibles.indexOf(card);
+    resaltarCard(card);
+    cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom);
+
+    const overlayEl = document.getElementById("overlay");
+    overlayEl.classList.add("activo");
+    document.body.style.overflow = "hidden";
+}
+
+// NUEVO: intenta reproducir con sonido; si el navegador lo bloquea, mutea y avisa al usuario
+function intentarReproducir(video, player) {
+    const promesa = video.play();
+    if (promesa !== undefined) {
+        promesa.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+            mostrarAvisoSonido(player, video);
+        });
+    }
+}
+function mostrarAvisoSonido(player, video) {
+    const previo = player.querySelector(".aviso-sonido");
+    if (previo) previo.remove();
+    const aviso = document.createElement("div");
+    aviso.className = "aviso-sonido";
+    aviso.tabIndex = 0;
+    aviso.innerText = "🔊 Tocá para activar el sonido";
+    const activar = () => { video.muted = false; video.play().catch(() => {}); aviso.remove(); };
+    aviso.onclick = activar;
+    aviso.addEventListener("keydown", e => { if (e.key === "Enter") activar(); });
+    player.appendChild(aviso);
+}
+
+function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
+    document.getElementById("overlayTitulo").innerText = nombre || "";
+    document.getElementById("overlayCiudad").innerText = ciudad ? "— " + ciudad : "";
+    const total = tarjetasVisibles.length;
+    document.getElementById("overlayInfo").innerText = total > 0 ? (indiceActual + 1) + " / " + total : "";
+
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+    const player = document.getElementById("overlayPlayer");
+    player.innerHTML = "";
+    // Se vuelve a insertar el menú de canales (se había borrado con innerHTML = "")
+    const menu = document.createElement("div");
+    menu.className = "canal-menu";
+    menu.id = "canalMenu";
+    menu.innerHTML = `<div class="filters" id="menuFilters"></div><div class="canal-menu-lista" id="menuLista"></div>`;
+    player.appendChild(menu);
+
+    if (tipo === "yt") {
+        let embedUrl = url;
+        if (!url.startsWith("http")) {
+            embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
+        }
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+    } else if (tipo === "twitch") {
+        player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`);
+    } else if (tipo === "ebu") {
+        player.insertAdjacentHTML("afterbegin", `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`);
+    } else if (tipo === "mp4") {
+        player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" autoplay playsinline webkit-playsinline="true" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
+        const v = document.getElementById("videoMp4");
+        if (v) intentarReproducir(v, player);
+    } else if (tipo === "hls") {
+        const video = document.createElement("video");
+        video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute("webkit-playsinline", "true");
+        video.setAttribute("x5-playsinline", "true");
+        video.disablePictureInPicture = true;
+        video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
+        player.insertBefore(video, player.firstChild);
+        if (typeof Hls !== "undefined" && Hls.isSupported()) {
+            hlsInstance = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                maxBufferLength: 10,
+                maxMaxBufferLength: 20,
+                maxBufferSize: 20 * 1000 * 1000,
+                startLevel: -1,
+                abrEwmaDefaultEstimate: 500000,
+                xhrSetup: function(xhr, requestUrl) {
+                    if (location.protocol === 'https:' && requestUrl.startsWith('http:')) {
+                        xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(requestUrl), true);
+                    }
+                }
+            });
+            hlsInstance.loadSource(url);
+            hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                intentarReproducir(video, player);
+            });
+            hlsInstance.on(Hls.Events.ERROR, function(e, data) {
+                if (data.fatal) {
+                    player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                    player.appendChild(menu);
+                }
+            });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = url;
+            video.addEventListener("error", function() {
+                player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                player.appendChild(menu);
+            });
+            intentarReproducir(video, player);
+        } else {
+            player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+            player.appendChild(menu);
+        }
+    } else if (tipo === "mp3") {
+        player.insertAdjacentHTML("afterbegin", `
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;gap:20px;">
+                <div style="font-size:3rem;">📻</div>
+                <div style="color:#fff;font-size:16px;font-weight:bold;">${nombre}</div>
+                <div style="color:#555;font-size:12px;">${ciudad}</div>
+                <audio controls autoplay style="width:80%;max-width:400px;">
+                    <source src="${url}" type="audio/mpeg">
+                </audio>
+            </div>`);
+    } else {
+        // Carga estándar para tipo "web", "iframe", "kick", "vimeo", etc.
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
+        // Aplica recorte milimétrico SOLO si es tipo "web"
+        if (tipo === "web") {
+            const iframe = player.querySelector("iframe");
+            if (iframe) {
+                iframe.style.position = "absolute";
+                iframe.style.top = cropTop;
+                iframe.style.left = cropLeft;
+                iframe.style.width = "110%";
+                iframe.style.height = "calc(100% + 200px)";
+                iframe.style.transform = `scale(${zoom})`;
+                iframe.style.transformOrigin = "center top";
+            }
+        }
+    }
+
+    // Si el menú de canales estaba abierto al cambiar de canal, lo mantenemos poblado
+    if (document.getElementById("btnToggleMenu").classList.contains("activo")) {
+        const regionActiva = document.querySelector("#menuFilters button.activo");
+        poblarMenuCanales(regionActiva ? regionActiva.dataset.region : "todas");
+        document.getElementById("canalMenu").classList.add("activo");
+    }
+}
+
+function cerrarOverlay() {
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    document.getElementById("overlay").classList.remove("activo");
+    document.getElementById("overlayPlayer").innerHTML = "";
+    document.getElementById("canalMenu")?.classList.remove("activo");
+    document.getElementById("btnToggleMenu")?.classList.remove("activo");
+    document.body.style.overflow = "";
+    document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+}
+
+function canalSiguiente() {
+    if (!tarjetasVisibles.length) return;
+    indiceActual = (indiceActual + 1) % tarjetasVisibles.length;
+    const card = tarjetasVisibles[indiceActual];
+    resaltarCard(card);
+
+    const cropTop  = card.dataset.cropTop  || "-90px";
+    const cropLeft = card.dataset.cropLeft || "-4%";
+    const zoom     = card.dataset.zoom     || "1.1";
+    const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
+}
+function canalAnterior() {
+    if (!tarjetasVisibles.length) return;
+    indiceActual = (indiceActual - 1 + tarjetasVisibles.length) % tarjetasVisibles.length;
+    const card = tarjetasVisibles[indiceActual];
+    resaltarCard(card);
+
+    const cropTop  = card.dataset.cropTop  || "-90px";
+    const cropLeft = card.dataset.cropLeft || "-4%";
+    const zoom     = card.dataset.zoom     || "1.1";
+    const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
+}
+function resaltarCard(card) {
+    document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+    card.classList.add("active");
+}
+
+// NUEVO: menú de canales dentro del overlay (todos / por región), sin salir del video
+let regionMenuIndex = 0;
+function toggleMenuCanales() {
+    const menu = document.getElementById("canalMenu");
     const btn = document.getElementById("btnToggleMenu");
     const abrir = !menu.classList.contains("activo");
     menu.classList.toggle("activo", abrir);
