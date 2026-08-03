@@ -8,7 +8,7 @@
     <meta property="og:description" content="Todos los canales de la televisión abierta argentina en un solo lugar." />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-/* Contenedor base para el reproductor (Proporción 16:9) */
+     /* Contenedor base para el reproductor (Proporción 16:9) */
 .web-player-container {
     position: relative;
     width: 100%;
@@ -25,7 +25,7 @@
     width: 100%;
     height: 100%;
     border: none;
-    transform: none;
+    transform: none; /* No aplica zoom para no romper YouTube */
 }
 /* Estilo RECORTE (Clase especial solo para canales tipo "web") */
 .web-player-container.modo-recorte iframe {
@@ -35,13 +35,6 @@
     height: calc(100% + 140px);
     transform: scale(1.1);
     transform-origin: center center;
-}
-
-/* Ajuste de placa/logo para reproductores de audio */
-.overlay-player video[poster],
-#overlayPlayer video[poster] {
-    object-fit: contain;
-    background-color: #0d0d11; /* Fondo oscuro elegante detrás de la placa */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,105 +69,52 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .search input { width: 100%; padding: 11px 14px; border-radius: 10px; background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a; outline: none; font-size: 14px; }
 .search input:focus { border-color: #e50914; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 12px; }
-.card { background: #161616; border-radius: 12px; border: 1px solid #1e1e1e; padding: 14px 10px 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
-.card:hover { border-color: #e50914; background: #1a1010; transform: translateY(-2px); }
-.card.active { border-color: #e50914; background: #1a0a0a; }
-.card:focus { outline: 4px solid #e50914; outline-offset: 2px; border-color: #e50914; }
-.card[data-tipo="sin"] { cursor: default; opacity: 0.5; }
-.card[data-tipo="sin"]:hover { transform: none; border-color: #1e1e1e; background: #161616; }
-.card-logo-wrap { width: 80px; height: 42px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
-.card-logo-wrap img { max-width: 80px; max-height: 42px; object-fit: contain; filter: brightness(0.9); }
-.card-logo-text { font-size: 12px; font-weight: 900; color: #2a2a2a; letter-spacing: -0.5px; text-align: center; line-height: 1.1; word-break: break-word; }
-.card-name { font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 2px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center; }
-.card-city { font-size: 9px; color: #4a4a4a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-.badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 9px; min-height: 16px; }
-.badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; font-weight: bold; line-height: 1.4; }
-.badge-pub { background: #0d2a0d; color: #4caf50; }
-.badge-priv { background: #0d1a3a; color: #5c8aff; }
-.badge-univ { background: #2a1a00; color: #ff9800; }
-.badge-com { background: #1a1a00; color: #cddc39; }
-.badge-rel { background: #2a0d0d; color: #ff5252; }
-.badge-nosenal { background: #2a2a2a; color: #555; }
-.btn-ver { width: 100%; padding: 8px; border: none; border-radius: 7px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s; }
-.btn-ver.play { background: #e50914; color: #fff; }
-.btn-ver.play:hover { background: #b8070f; }
-.btn-ver.yt-link { background: #ff0000; color: #fff; }
-.btn-ver.yt-link:hover { background: #cc0000; }
-.btn-ver.sin { background: #1a1a1a; color: #444; cursor: default; border: 1px solid #1e1e1e; }
-footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; margin-top: 20px; border-top: 1px solid #111; }
-.btn-contacto { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #1a1a1a; color: #666; text-decoration: none; border-radius: 7px; border: 1px solid #2a2a2a; font-size: 11px; }
-
-@media (max-width: 480px) { .grid { grid-template-columns: 1fr; gap: 8px; padding: 8px; } .logo-texto { font-size: 1.4rem; } .btn-nav { padding: 10px 20px; font-size: 14px; } }
-@media (min-width: 1200px) { .btn-nav { padding: 14px 40px; font-size: 18px; } .btn-cerrar { padding: 12px 28px; font-size: 16px; } .overlay-titulo { font-size: 18px; } }
-
-/* Aviso de sonido bloqueado por autoplay */
-.aviso-sonido {
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,.9);
-    color: #fff;
-    padding: 16px 30px;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: bold;
-    z-index: 6;
-    cursor: pointer;
-    border: 2px solid #e50914;
+ 
+        contenedor.classList.add('modo-recorte');
+    } else {
+        contenedor.classList.remove('modo-recorte');
+    }
 }
-.aviso-sonido:focus { outline: 3px solid #fff; }
 
-/* Menú de canales dentro del overlay (panel lateral) */
-.canal-menu {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: 320px;
-    max-width: 85%;
-    background: #0d0d0d;
-    border-left: 2px solid #1e1e1e;
-    transform: translateX(100%);
-    transition: transform .25s ease;
-    overflow-y: auto;
-    z-index: 5;
-    padding: 12px;
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) { registration.unregister(); }
+    });
+    caches.keys().then(function(cacheNames) {
+        cacheNames.forEach(function(cacheName) { caches.delete(cacheName); });
+    });
 }
-.canal-menu.activo { transform: translateX(0); }
-.canal-menu .filters { padding: 0 0 10px; background: transparent; }
-.canal-menu-lista { display: flex; flex-direction: column; gap: 6px; }
-.canal-menu-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #161616;
-    border: 2px solid transparent;
-    color: #ddd;
-    font-size: 14px;
-    font-weight: bold;
-}
-.canal-menu-item:hover, .canal-menu-item:focus {
-    background: #e50914;
-    color: #fff;
-    outline: none;
-    border-color: #fff;
-}
-    </style>
-</head>
-<body>
-
+</script>
 <header>
-    <div class="logo-texto">TeleArgenta</div>
-    <span class="logo-sub">TV Abierta en Vivo</span>
-    <span class="logo-contador" id="contadorCanales">Cargando canales...</span>
+    <h1 class="logo-texto"><span class="parentesis">(</span>TELE<span class="parentesis">)</span>ARGENTA</h1>
+    <span class="logo-sub">TELEVISIÓN ABIERTA EN VIVO</span>
+    <span class="logo-contador" id="contadorCanales"></span>
 </header>
-
+<div class="overlay" id="overlay">
+    <div class="overlay-header">
+        <div>
+            <span class="overlay-titulo" id="overlayTitulo"></span>
+            <span class="overlay-ciudad" id="overlayCiudad"></span>
+        </div>
+        <button class="btn-cerrar" onclick="cerrarOverlay()">✕ Cerrar</button>
+    </div>
+    <div class="overlay-player" id="overlayPlayer">
+        <!-- NUEVO: menú lateral de canales, vive dentro del reproductor para superponerse al video -->
+        <div class="canal-menu" id="canalMenu">
+            <div class="filters" id="menuFilters"></div>
+            <div class="canal-menu-lista" id="menuLista"></div>
+        </div>
+    </div>
+    <div class="overlay-nav">
+        <button class="btn-nav" onclick="canalAnterior()">◀ Anterior</button>
+        <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
+        <div class="overlay-canal-info" id="overlayInfo"></div>
+        <button class="btn-nav" onclick="canalSiguiente()">Siguiente ▶</button>
+    </div>
+</div>
 <div class="filters">
-    <button class="activo" onclick="filtrar('todas')">Todas</button>
-    <button onclick="filtrar('nacional')">Nacional</button>
+    <button onclick="filtrar('todas')" class="activo">Todas</button>
+    <button onclick="filtrar('nacional')">Nacional TDA</button>
     <button onclick="filtrar('amba')">AMBA</button>
     <button onclick="filtrar('bsas')">Bs. As.</button>
     <button onclick="filtrar('centro')">Centro</button>
@@ -183,11 +123,9 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
     <button onclick="filtrar('patagonia')">Patagonia</button>
     <button onclick="filtrar('internacional')">Internacional</button>
 </div>
-
 <div class="search">
-    <input type="text" id="searchInput" oninput="buscar()" placeholder="🔍 Buscar canal...">
+    <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
 </div>
-
 <div class="grid" id="grid">
 
 <!-- === NACIONAL === -->
