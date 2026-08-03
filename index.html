@@ -8,7 +8,7 @@
     <meta property="og:description" content="Todos los canales de la televisión abierta argentina en un solo lugar." />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-     /* Contenedor base para el reproductor (Proporción 16:9) */
+/* Contenedor base para el reproductor (Proporción 16:9) */
 .web-player-container {
     position: relative;
     width: 100%;
@@ -25,7 +25,7 @@
     width: 100%;
     height: 100%;
     border: none;
-    transform: none; /* No aplica zoom para no romper YouTube */
+    transform: none;
 }
 /* Estilo RECORTE (Clase especial solo para canales tipo "web") */
 .web-player-container.modo-recorte iframe {
@@ -35,6 +35,13 @@
     height: calc(100% + 140px);
     transform: scale(1.1);
     transform-origin: center center;
+}
+
+/* Ajuste de placa/logo para reproductores de audio */
+.overlay-player video[poster],
+#overlayPlayer video[poster] {
+    object-fit: contain;
+    background-color: #0d0d11; /* Fondo oscuro elegante detrás de la placa */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,52 +76,105 @@ header { text-align: center; padding: 22px 20px 12px; background: linear-gradien
 .search input { width: 100%; padding: 11px 14px; border-radius: 10px; background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a; outline: none; font-size: 14px; }
 .search input:focus { border-color: #e50914; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; padding: 12px; }
- 
-        contenedor.classList.add('modo-recorte');
-    } else {
-        contenedor.classList.remove('modo-recorte');
-    }
-}
+.card { background: #161616; border-radius: 12px; border: 1px solid #1e1e1e; padding: 14px 10px 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+.card:hover { border-color: #e50914; background: #1a1010; transform: translateY(-2px); }
+.card.active { border-color: #e50914; background: #1a0a0a; }
+.card:focus { outline: 4px solid #e50914; outline-offset: 2px; border-color: #e50914; }
+.card[data-tipo="sin"] { cursor: default; opacity: 0.5; }
+.card[data-tipo="sin"]:hover { transform: none; border-color: #1e1e1e; background: #161616; }
+.card-logo-wrap { width: 80px; height: 42px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; }
+.card-logo-wrap img { max-width: 80px; max-height: 42px; object-fit: contain; filter: brightness(0.9); }
+.card-logo-text { font-size: 12px; font-weight: 900; color: #2a2a2a; letter-spacing: -0.5px; text-align: center; line-height: 1.1; word-break: break-word; }
+.card-name { font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 2px; line-height: 1.3; min-height: 28px; display: flex; align-items: center; justify-content: center; }
+.card-city { font-size: 9px; color: #4a4a4a; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+.badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-bottom: 9px; min-height: 16px; }
+.badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; font-weight: bold; line-height: 1.4; }
+.badge-pub { background: #0d2a0d; color: #4caf50; }
+.badge-priv { background: #0d1a3a; color: #5c8aff; }
+.badge-univ { background: #2a1a00; color: #ff9800; }
+.badge-com { background: #1a1a00; color: #cddc39; }
+.badge-rel { background: #2a0d0d; color: #ff5252; }
+.badge-nosenal { background: #2a2a2a; color: #555; }
+.btn-ver { width: 100%; padding: 8px; border: none; border-radius: 7px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s; }
+.btn-ver.play { background: #e50914; color: #fff; }
+.btn-ver.play:hover { background: #b8070f; }
+.btn-ver.yt-link { background: #ff0000; color: #fff; }
+.btn-ver.yt-link:hover { background: #cc0000; }
+.btn-ver.sin { background: #1a1a1a; color: #444; cursor: default; border: 1px solid #1e1e1e; }
+footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; margin-top: 20px; border-top: 1px solid #111; }
+.btn-contacto { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #1a1a1a; color: #666; text-decoration: none; border-radius: 7px; border: 1px solid #2a2a2a; font-size: 11px; }
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) { registration.unregister(); }
-    });
-    caches.keys().then(function(cacheNames) {
-        cacheNames.forEach(function(cacheName) { caches.delete(cacheName); });
-    });
+@media (max-width: 480px) { .grid { grid-template-columns: 1fr; gap: 8px; padding: 8px; } .logo-texto { font-size: 1.4rem; } .btn-nav { padding: 10px 20px; font-size: 14px; } }
+@media (min-width: 1200px) { .btn-nav { padding: 14px 40px; font-size: 18px; } .btn-cerrar { padding: 12px 28px; font-size: 16px; } .overlay-titulo { font-size: 18px; } }
+
+/* Aviso de sonido bloqueado por autoplay */
+.aviso-sonido {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.9);
+    color: #fff;
+    padding: 16px 30px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 6;
+    cursor: pointer;
+    border: 2px solid #e50914;
 }
-</script>
+.aviso-sonido:focus { outline: 3px solid #fff; }
+
+/* Menú de canales dentro del overlay (panel lateral) */
+.canal-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 320px;
+    max-width: 85%;
+    background: #0d0d0d;
+    border-left: 2px solid #1e1e1e;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    overflow-y: auto;
+    z-index: 5;
+    padding: 12px;
+}
+.canal-menu.activo { transform: translateX(0); }
+.canal-menu .filters { padding: 0 0 10px; background: transparent; }
+.canal-menu-lista { display: flex; flex-direction: column; gap: 6px; }
+.canal-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #161616;
+    border: 2px solid transparent;
+    color: #ddd;
+    font-size: 14px;
+    font-weight: bold;
+}
+.canal-menu-item:hover, .canal-menu-item:focus {
+    background: #e50914;
+    color: #fff;
+    outline: none;
+    border-color: #fff;
+}
+    </style>
+</head>
+<body>
+
 <header>
-    <h1 class="logo-texto"><span class="parentesis">(</span>TELE<span class="parentesis">)</span>ARGENTA</h1>
-    <span class="logo-sub">TELEVISIÓN ABIERTA EN VIVO</span>
-    <span class="logo-contador" id="contadorCanales"></span>
+    <div class="logo-texto">TeleArgenta</div>
+    <span class="logo-sub">TV Abierta en Vivo</span>
+    <span class="logo-contador" id="contadorCanales">Cargando canales...</span>
 </header>
-<div class="overlay" id="overlay">
-    <div class="overlay-header">
-        <div>
-            <span class="overlay-titulo" id="overlayTitulo"></span>
-            <span class="overlay-ciudad" id="overlayCiudad"></span>
-        </div>
-        <button class="btn-cerrar" onclick="cerrarOverlay()">✕ Cerrar</button>
-    </div>
-    <div class="overlay-player" id="overlayPlayer">
-        <!-- NUEVO: menú lateral de canales, vive dentro del reproductor para superponerse al video -->
-        <div class="canal-menu" id="canalMenu">
-            <div class="filters" id="menuFilters"></div>
-            <div class="canal-menu-lista" id="menuLista"></div>
-        </div>
-    </div>
-    <div class="overlay-nav">
-        <button class="btn-nav" onclick="canalAnterior()">◀ Anterior</button>
-        <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
-        <div class="overlay-canal-info" id="overlayInfo"></div>
-        <button class="btn-nav" onclick="canalSiguiente()">Siguiente ▶</button>
-    </div>
-</div>
+
 <div class="filters">
-    <button onclick="filtrar('todas')" class="activo">Todas</button>
-    <button onclick="filtrar('nacional')">Nacional TDA</button>
+    <button class="activo" onclick="filtrar('todas')">Todas</button>
+    <button onclick="filtrar('nacional')">Nacional</button>
     <button onclick="filtrar('amba')">AMBA</button>
     <button onclick="filtrar('bsas')">Bs. As.</button>
     <button onclick="filtrar('centro')">Centro</button>
@@ -123,10 +183,42 @@ if ('serviceWorker' in navigator) {
     <button onclick="filtrar('patagonia')">Patagonia</button>
     <button onclick="filtrar('internacional')">Internacional</button>
 </div>
+
 <div class="search">
-    <input type="text" id="searchInput" onkeyup="buscar()" placeholder="Buscar canal o ciudad...">
+    <input type="text" id="searchInput" oninput="buscar()" placeholder="🔍 Buscar canal...">
 </div>
+
 <div class="grid" id="grid">
+    <!-- Perfil Radio con soporte para data-poster -->
+    <div class="card" data-region="amba" data-nombre="perfil radio noticias" data-url="https://jireh-1-hls-audio-br-isp.dps.live/hls-audio/4e252a65837b69e349d5d8c1033152b4/perfil/playlist/manifest/gotardisz/audio/now/livestream1.m3u8" data-tipo="hls" data-poster="https://perfil.com/assets/images/logo-radio-perfil.png" data-ciudad="Nacional" data-logo-text="PERFIL RADIO">
+        <div class="card-logo-wrap"><div class="card-logo-text">PERFIL RADIO</div></div>
+        <div class="card-name">Perfil Radio</div>
+        <div class="card-city">AMBA</div>
+        <div class="badges">
+            <span class="badge badge-priv">PRIVADO</span>
+            <span class="badge badge-priv">NOTICIAS</span>
+        </div>
+        <button class="btn-ver play">▶ Escuchar</button>
+    </div>
+</div>
+
+<!-- Modal Overlay reproductor -->
+<div class="overlay" id="overlay">
+    <div class="overlay-header">
+        <div>
+            <span class="overlay-titulo" id="overlayTitulo"></span>
+            <span class="overlay-ciudad" id="overlayCiudad"></span>
+        </div>
+        <button class="btn-cerrar" onclick="cerrarOverlay()">✕ Cerrar</button>
+    </div>
+    <div class="overlay-player" id="overlayPlayer"></div>
+    <div class="overlay-nav">
+        <button class="btn-nav" onclick="canalAnterior()">◄ Anterior</button>
+        <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
+        <span class="overlay-canal-info" id="overlayInfo"></span>
+        <button class="btn-nav" onclick="canalSiguiente()">Siguiente ►</button>
+    </div>
+</div>
 
 <!-- === NACIONAL === -->
 
@@ -2159,6 +2251,7 @@ if ('serviceWorker' in navigator) {
     <p>© 2026 TeleArgenta — Televisión abierta en vivo</p>
     <a href="mailto:teleargenta@gmail.com" class="btn-contacto">📧 Sugerí un canal</a>
 </footer>
+
 <script>
 let hlsInstance = null;
 let tarjetasVisibles = [];
@@ -2170,10 +2263,11 @@ function abrirCanal(card) {
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
     const nombre   = card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "";
     const ciudad   = card.dataset.ciudad || "";
-    // Captura los valores de recorte personalizados de la tarjeta
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
+    const poster   = card.dataset.poster   || "";
+
     if (tipo === "sin") return;
     if (tipo === "yt-link") {
         if (url) window.open(url, "_blank");
@@ -2188,14 +2282,13 @@ function abrirCanal(card) {
 
     indiceActual = tarjetasVisibles.indexOf(card);
     resaltarCard(card);
-    cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom);
+    cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, poster);
 
     const overlayEl = document.getElementById("overlay");
     overlayEl.classList.add("activo");
     document.body.style.overflow = "hidden";
 }
 
-// NUEVO: intenta reproducir con sonido; si el navegador lo bloquea, mutea y avisa al usuario
 function intentarReproducir(video, player) {
     const promesa = video.play();
     if (promesa !== undefined) {
@@ -2206,6 +2299,7 @@ function intentarReproducir(video, player) {
         });
     }
 }
+
 function mostrarAvisoSonido(player, video) {
     const previo = player.querySelector(".aviso-sonido");
     if (previo) previo.remove();
@@ -2219,7 +2313,7 @@ function mostrarAvisoSonido(player, video) {
     player.appendChild(aviso);
 }
 
-function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
+function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, poster) {
     document.getElementById("overlayTitulo").innerText = nombre || "";
     document.getElementById("overlayCiudad").innerText = ciudad ? "— " + ciudad : "";
     const total = tarjetasVisibles.length;
@@ -2231,7 +2325,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
     }
     const player = document.getElementById("overlayPlayer");
     player.innerHTML = "";
-    // Se vuelve a insertar el menú de canales (se había borrado con innerHTML = "")
+
     const menu = document.createElement("div");
     menu.className = "canal-menu";
     menu.id = "canalMenu";
@@ -2244,14 +2338,22 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
             embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
         }
         player.insertAdjacentHTML("afterbegin", `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
+    } else if (tipo === "kick") {
+        const canal = url.replace("https://kick.com/", "").replace("https://player.kick.com/", "").replace("/", "");
+        player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.kick.com/${canal}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
     } else if (tipo === "twitch") {
         player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`);
+
     } else if (tipo === "ebu") {
         player.insertAdjacentHTML("afterbegin", `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`);
+
     } else if (tipo === "mp4") {
         player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" autoplay playsinline webkit-playsinline="true" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
         const v = document.getElementById("videoMp4");
         if (v) intentarReproducir(v, player);
+
     } else if (tipo === "hls") {
         const video = document.createElement("video");
         video.autoplay = true;
@@ -2259,8 +2361,14 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
         video.setAttribute("webkit-playsinline", "true");
         video.setAttribute("x5-playsinline", "true");
         video.disablePictureInPicture = true;
-        video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
+        video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;object-fit:contain;";
+
+        if (poster) {
+            video.poster = poster;
+        }
+
         player.insertBefore(video, player.firstChild);
+
         if (typeof Hls !== "undefined" && Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
@@ -2309,10 +2417,8 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
                 </audio>
             </div>`);
     } else {
-        // Carga estándar para tipo "web", "iframe", "kick", "vimeo", etc.
         player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
 
-        // Aplica recorte milimétrico SOLO si es tipo "web"
         if (tipo === "web") {
             const iframe = player.querySelector("iframe");
             if (iframe) {
@@ -2327,8 +2433,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
         }
     }
 
-    // Si el menú de canales estaba abierto al cambiar de canal, lo mantenemos poblado
-    if (document.getElementById("btnToggleMenu").classList.contains("activo")) {
+    if (document.getElementById("btnToggleMenu")?.classList.contains("activo")) {
         const regionActiva = document.querySelector("#menuFilters button.activo");
         poblarMenuCanales(regionActiva ? regionActiva.dataset.region : "todas");
         document.getElementById("canalMenu").classList.add("activo");
@@ -2354,9 +2459,11 @@ function canalSiguiente() {
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
+    const poster   = card.dataset.poster   || "";
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom, poster);
 }
+
 function canalAnterior() {
     if (!tarjetasVisibles.length) return;
     indiceActual = (indiceActual - 1 + tarjetasVisibles.length) % tarjetasVisibles.length;
@@ -2366,15 +2473,16 @@ function canalAnterior() {
     const cropTop  = card.dataset.cropTop  || "-90px";
     const cropLeft = card.dataset.cropLeft || "-4%";
     const zoom     = card.dataset.zoom     || "1.1";
+    const poster   = card.dataset.poster   || "";
     const url      = card.dataset.url || card.dataset.playlist || card.dataset.live;
-    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom);
+    cargarEnOverlay(url, card.dataset.tipo, card.querySelector(".card-name") ? card.querySelector(".card-name").innerText : "", card.dataset.ciudad, cropTop, cropLeft, zoom, poster);
 }
+
 function resaltarCard(card) {
     document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
     card.classList.add("active");
 }
 
-// NUEVO: menú de canales dentro del overlay (todos / por región), sin salir del video
 let regionMenuIndex = 0;
 function toggleMenuCanales() {
     const menu = document.getElementById("canalMenu");
@@ -2391,7 +2499,7 @@ function toggleMenuCanales() {
         if (primerItem) primerItem.focus();
     }
 }
-// NUEVO: cambia de región dentro del menú y reinicia el scroll/foco a la lista nueva
+
 function cambiarRegionMenu(direccion) {
     regionMenuIndex = (regionMenuIndex + direccion + REGIONES.length) % REGIONES.length;
     poblarMenuCanales(REGIONES[regionMenuIndex]);
@@ -2400,7 +2508,7 @@ function cambiarRegionMenu(direccion) {
     const primerItem = document.querySelector("#menuLista .canal-menu-item");
     if (primerItem) primerItem.focus();
 }
-// NUEVO: mueve el foco entre canales del menú y fuerza el scroll (el TV no lo hace solo)
+
 function moverFocoMenu(direccion) {
     const items = Array.from(document.querySelectorAll("#menuLista .canal-menu-item"));
     if (!items.length) return;
@@ -2409,6 +2517,7 @@ function moverFocoMenu(direccion) {
     items[idx].focus();
     items[idx].scrollIntoView({ block: "nearest" });
 }
+
 function poblarMenuCanales(region) {
     const menuFilters = document.getElementById("menuFilters");
     menuFilters.innerHTML = REGIONES.map(r =>
@@ -2443,8 +2552,6 @@ document.getElementById("grid").addEventListener("click", function(e) {
     abrirCanal(card);
 });
 
-// NUEVO: teclado / control remoto — solo actúa mientras el overlay está abierto,
-// para no interferir con la búsqueda o la navegación de la grilla principal.
 document.addEventListener("keydown", e => {
     const overlayEl = document.getElementById("overlay");
     const overlayAbierto = overlayEl.classList.contains("activo");
@@ -2463,8 +2570,6 @@ document.addEventListener("keydown", e => {
         return;
     }
     if (menuAbierto) {
-        // Dentro del menú: arriba/abajo = mover entre canales (con scroll forzado)
-        //                   izquierda/derecha = cambiar de región
         if (e.key === "ArrowDown")  { e.preventDefault(); moverFocoMenu(1); }
         if (e.key === "ArrowUp")    { e.preventDefault(); moverFocoMenu(-1); }
         if (e.key === "ArrowRight") { e.preventDefault(); cambiarRegionMenu(1); }
@@ -2490,6 +2595,7 @@ function filtrar(region) {
     });
     actualizarVisibles();
 }
+
 function buscar() {
     const input = document.getElementById("searchInput").value.toLowerCase();
     document.querySelectorAll(".filters button").forEach(b => b.classList.remove("activo"));
@@ -2499,12 +2605,13 @@ function buscar() {
     });
     actualizarVisibles();
 }
+
 function actualizarVisibles() {
     tarjetasVisibles = Array.from(document.querySelectorAll(".card"))
         .filter(c => c.style.display !== "none" && c.dataset.tipo !== "sin" && c.dataset.tipo !== "yt-link");
 }
+
 window.addEventListener("load", () => {
-    // Intenta ocultar la barra superior del navegador del TV sin activar el fullscreen nativo
     setTimeout(() => window.scrollTo(0, 1), 100);
 
     const total = document.querySelectorAll(".card:not([data-tipo='sin'])").length;
@@ -2512,7 +2619,6 @@ window.addEventListener("load", () => {
     if (contador) contador.innerText = total + " canales disponibles";
     actualizarVisibles();
 
-    // NUEVO: hacer las tarjetas focuseables y activables con Enter (navegación por control remoto)
     document.querySelectorAll(".card").forEach(c => {
         if (c.dataset.tipo !== "sin") {
             c.tabIndex = 0;
@@ -2525,5 +2631,3 @@ window.addEventListener("load", () => {
 </script>
 </body>
 </html>
-
-
