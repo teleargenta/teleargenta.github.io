@@ -2326,25 +2326,29 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
     menu.innerHTML = `<div class="filters" id="menuFilters"></div><div class="canal-menu-lista" id="menuLista"></div>`;
     player.appendChild(menu);
 
-    if (tipo === "yt") {
+   if (tipo === "yt") {
         let embedUrl = url;
         if (!url.startsWith("http")) {
             embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
         }
-        } else if (tipo === "kick") {
-    // Extrae el nombre del canal si pegas la URL completa o solo el usuario
-    const canal = url.replace("https://kick.com/", "").replace("https://player.kick.com/", "").replace("/", "");
-    player.innerHTML = `<iframe src="https://player.kick.com/${canal}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-}
         player.insertAdjacentHTML("afterbegin", `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
+    } else if (tipo === "kick") {
+        // Extrae el usuario o limpia la URL si pegaste la ruta completa
+        const canal = url.replace("https://kick.com/", "").replace("https://player.kick.com/", "").replace("/", "");
+        player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.kick.com/${canal}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
     } else if (tipo === "twitch") {
         player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`);
+
     } else if (tipo === "ebu") {
         player.insertAdjacentHTML("afterbegin", `<img src="${url}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`);
+
     } else if (tipo === "mp4") {
         player.insertAdjacentHTML("afterbegin", `<video id="videoMp4" autoplay playsinline webkit-playsinline="true" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="${url}"></video>`);
         const v = document.getElementById("videoMp4");
         if (v) intentarReproducir(v, player);
+
     } else if (tipo === "hls") {
         const video = document.createElement("video");
         video.autoplay = true;
@@ -2354,6 +2358,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
         video.disablePictureInPicture = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.insertBefore(video, player.firstChild);
+
         if (typeof Hls !== "undefined" && Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
