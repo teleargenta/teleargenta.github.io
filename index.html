@@ -35,7 +35,12 @@
     height: calc(100% + 140px);
     transform: scale(1.1);
     transform-origin: center center;
+/* Ajuste de placa/logo para reproductores de audio */
+#player video[poster] {
+    object-fit: contain;
+    background-color: #0d0d11; /* Fondo oscuro elegante detrás de la placa */
 }
+    
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; min-height: 100vh; }
@@ -2390,7 +2395,25 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
         video.disablePictureInPicture = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;";
         player.insertBefore(video, player.firstChild);
+       
+} else if (tipo === "hls") {
+        const video = document.createElement("video");
+        video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute("webkit-playsinline", "true");
+        video.setAttribute("x5-playsinline", "true");
+        video.disablePictureInPicture = true;
+        video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;object-fit:contain;";
 
+        // Asignar placa/logo si existe en la tarjeta
+        if (card.dataset.poster) {
+            video.poster = card.dataset.poster;
+        }
+
+        player.insertBefore(video, player.firstChild);
+        // ... resto de la lógica de HLS.js
+
+       
         if (typeof Hls !== "undefined" && Hls.isSupported()) {
             hlsInstance = new Hls({
                 enableWorker: true,
