@@ -2331,6 +2331,11 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom) {
         if (!url.startsWith("http")) {
             embedUrl = `https://www.youtube.com/embed/live_stream?channel=${url}&autoplay=1&mute=0&rel=0`;
         }
+        } else if (tipo === "kick") {
+    // Extrae el nombre del canal si pegas la URL completa o solo el usuario
+    const canal = url.replace("https://kick.com/", "").replace("https://player.kick.com/", "").replace("/", "");
+    player.innerHTML = `<iframe src="https://player.kick.com/${canal}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+}
         player.insertAdjacentHTML("afterbegin", `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
     } else if (tipo === "twitch") {
         player.insertAdjacentHTML("afterbegin", `<iframe src="https://player.twitch.tv/?channel=${url}&parent=${location.hostname}&autoplay=true" allowfullscreen></iframe>`);
