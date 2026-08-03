@@ -2237,23 +2237,7 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
 
  </div><!-- fin grid -->
 
-<!-- Modal Overlay reproductor -->
-<div class="overlay" id="overlay">
-    <div class="overlay-header">
-        <div>
-            <span class="overlay-titulo" id="overlayTitulo"></span>
-            <span class="overlay-ciudad" id="overlayCiudad"></span>
-        </div>
-        <button class="btn-cerrar" onclick="cerrarOverlay()">✕ Cerrar</button>
-    </div>
-    <div class="overlay-player" id="overlayPlayer"></div>
-    <div class="overlay-nav">
-        <button class="btn-nav" onclick="canalAnterior()">◄ Anterior</button>
-        <button class="btn-toggle-menu" id="btnToggleMenu" onclick="toggleMenuCanales()">☰ Canales</button>
-        <span class="overlay-canal-info" id="overlayInfo"></span>
-        <button class="btn-nav" onclick="canalSiguiente()">Siguiente ►</button>
-    </div>
-</div>
+
 
 <footer>
     <p>© 2026 TeleArgenta — Televisión abierta en vivo</p>
@@ -2334,6 +2318,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, pos
     const player = document.getElementById("overlayPlayer");
     player.innerHTML = "";
 
+    // Reinserta el menú de canales interno
     const menu = document.createElement("div");
     menu.className = "canal-menu";
     menu.id = "canalMenu";
@@ -2371,9 +2356,88 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, pos
         video.disablePictureInPicture = true;
         video.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;background:#000;object-fit:contain;";
 
+        player.insertBefore(video, player.firstChild);
+
+        // Capa de imagen/logo si la tarjeta incluye data-poster
         if (poster) {
-            video.poster = poster;
+            const imgPoster = document.createElement("img");
+            imgPoster.src = poster;
+            imgPoster.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#0d0d11;z-index:1;pointer-events:none;";
+            player.appendChild(imgPoster);
         }
+
+        if (typeof Hls !== "undefined" && Hls.isSupported()) {
+            hlsInstance = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                maxBufferLength: 10,
+                maxMaxBufferLength: 20,
+                maxBufferSize: 20 * 1000 * 1000,
+                startLevel: -1,
+                abrEwmaDefaultEstimate: 500000,
+                xhrSetup: function(xhr, requestUrl) {
+                    if (location.protocol === 'https:' && requestUrl.startsWith('http:')) {
+                        xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(requestUrl), true);
+                    }
+                }
+            });
+            hlsInstance.loadSource(url);
+            hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                intentarReproducir(video, player);
+            });
+            hlsInstance.on(Hls.Events.ERROR, function(e, data) {
+                if (data.fatal) {
+                    player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                    player.appendChild(menu);
+                }
+            });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            video.src = url;
+            video.addEventListener("error", function() {
+                player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+                player.appendChild(menu);
+            });
+            intentarReproducir(video, player);
+        } else {
+            player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
+            player.appendChild(menu);
+        }
+
+    } else if (tipo === "mp3") {
+        player.insertAdjacentHTML("afterbegin", `
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;gap:20px;">
+                <div style="font-size:3rem;">📻</div>
+                <div style="color:#fff;font-size:16px;font-weight:bold;">${nombre}</div>
+                <div style="color:#555;font-size:12px;">${ciudad}</div>
+                <audio controls autoplay style="width:80%;max-width:400px;">
+                    <source src="${url}" type="audio/mpeg">
+                </audio>
+            </div>`);
+
+    } else {
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
+        if (tipo === "web") {
+            const iframe = player.querySelector("iframe");
+            if (iframe) {
+                iframe.style.position = "absolute";
+                iframe.style.top = cropTop;
+                iframe.style.left = cropLeft;
+                iframe.style.width = "110%";
+                iframe.style.height = "calc(100% + 200px)";
+                iframe.style.transform = `scale(${zoom})`;
+                iframe.style.transformOrigin = "center top";
+            }
+        }
+    }
+
+    if (document.getElementById("btnToggleMenu")?.classList.contains("activo")) {
+        const regionActiva = document.querySelector("#menuFilters button.activo");
+        poblarMenuCanales(regionActiva ? regionActiva.dataset.region : "todas");
+        document.getElementById("canalMenu").classList.add("activo");
+    }
+}
 
         player.insertBefore(video, player.firstChild);
 
