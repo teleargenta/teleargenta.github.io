@@ -2338,7 +2338,6 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
     <p>© 2026 TeleArgenta — Televisión abierta en vivo</p>
     <a href="mailto:teleargenta@gmail.com" class="btn-contacto">📧 Sugerí un canal</a>
 </footer>
-
 <script>
 let hlsInstance = null;
 let tarjetasVisibles = [];
@@ -2441,9 +2440,6 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, pos
         const v = document.getElementById("videoMp4");
         if (v) intentarReproducir(v, player);
 
-
-
-    
     } else if (tipo === "hls") {
         const video = document.createElement("video");
         video.autoplay = true;
@@ -2496,32 +2492,7 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, pos
             player.innerHTML = `<img src="SMPTE.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;">`;
             player.appendChild(menu);
         }
-    } else if (tipo === "mp3") {
-        player.insertAdjacentHTML("afterbegin", `
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;gap:20px;">
-                <div style="font-size:3rem;">📻</div>
-                <div style="color:#fff;font-size:16px;font-weight:bold;">${nombre}</div>
-                <div style="color:#555;font-size:12px;">${ciudad}</div>
-                <audio controls autoplay style="width:80%;max-width:400px;">
-                    <source src="${url}" type="audio/mpeg">
-                </audio>
-            </div>`);
-    } else {
-        player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
-
-        if (tipo === "web") {
-            const iframe = player.querySelector("iframe");
-            if (iframe) {
-                iframe.style.position = "absolute";
-                iframe.style.top = cropTop;
-                iframe.style.left = cropLeft;
-                iframe.style.width = "110%";
-                iframe.style.height = "calc(100% + 200px)";
-                iframe.style.transform = `scale(${zoom})`;
-                iframe.style.transformOrigin = "center top";
-            }
-        }
-    }
+        
     } else if (tipo === "mp3" || tipo === "radio") {
         // Si hay un poster (logo), lo muestra. Si no, muestra el emoji de radio.
         const imagen = poster 
@@ -2539,7 +2510,24 @@ function cargarEnOverlay(url, tipo, nombre, ciudad, cropTop, cropLeft, zoom, pos
                     Tu navegador no soporta la reproducción de audio.
                 </audio>
             </div>`);
+            
+    } else {
+        player.insertAdjacentHTML("afterbegin", `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>`);
+
+        if (tipo === "web") {
+            const iframe = player.querySelector("iframe");
+            if (iframe) {
+                iframe.style.position = "absolute";
+                iframe.style.top = cropTop;
+                iframe.style.left = cropLeft;
+                iframe.style.width = "110%";
+                iframe.style.height = "calc(100% + 200px)";
+                iframe.style.transform = `scale(${zoom})`;
+                iframe.style.transformOrigin = "center top";
+            }
+        }
     }
+
     if (document.getElementById("btnToggleMenu")?.classList.contains("activo")) {
         const regionActiva = document.querySelector("#menuFilters button.activo");
         poblarMenuCanales(regionActiva ? regionActiva.dataset.region : "todas");
@@ -2736,5 +2724,7 @@ window.addEventListener("load", () => {
     });
 });
 </script>
+</body>
+</html>
 </body>
 </html>
