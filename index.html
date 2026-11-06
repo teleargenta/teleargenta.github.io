@@ -162,6 +162,16 @@ footer { text-align: center; padding: 35px 20px; font-size: 11px; color: #333; m
     outline: none;
     border-color: #fff;
 }
+        /* Anula el efecto apagado para que el logo se vea bien */
+.card[data-tipo="sin"] { 
+    cursor: default; 
+    opacity: 1; /* Clave para que el logo no se vea transparente */
+}
+.card[data-tipo="sin"]:hover { 
+    transform: translateY(-2px); 
+    border-color: #444; 
+    background: #1a1a1a; 
+}
     </style>
 </head>
 <body>
